@@ -101,54 +101,37 @@ async function processFolder(files) {
 
 // === OBTENER ARCHIVO COMO BLOB ===
 
-async function getFileAsset(rutaRelativa) {
-    // 1. Extraemos solo el nombre del archivo (ej: 03_1P_..._analizado.mp4)
-    // Esto es vital porque tus logs mostraron que el navegador no guarda las carpetas
-    const nombreArchivoBuscado = rutaRelativa.split('/').pop().trim();
+async function getFileAsset(relativePath) {
+    try {
+        const cleanPath = relativePath.replace(/^\.[\\/]?/, '').replace(/\\/g, '/');
 
-    console.log("🔍 Intentando cargar archivo:", nombreArchivoBuscado);
-
-    if (appState.sourceType === 'zip') {
-        // --- LÓGICA PARA ZIP (Aquí sí solemos tener rutas) ---
-        let file = appState.zipContent.file(rutaRelativa);
-        
-        if (!file) {
-            // Si no lo encuentra por ruta completa, buscamos por nombre dentro del ZIP
-            const realPath = Object.keys(appState.zipContent.files).find(path => 
-                path.replace(/\\/g, '/').endsWith(nombreArchivoBuscado)
+        if (appState.sourceType === 'zip') {
+            let zipKey = Object.keys(appState.zipContent.files).find(k =>
+                k.endsWith(cleanPath) || k === cleanPath
             );
-            if (realPath) file = appState.zipContent.file(realPath);
-        }
-
-        if (file) {
-            const blob = await file.async('blob');
-            return URL.createObjectURL(blob);
-        }
-    } else {
-        // --- LÓGICA PARA CARPETA LOCAL ---
-        // Buscamos el archivo comparando exclusivamente el nombre
-        const fileObj = appState.allFilesFlat.find(f => {
-            if (!f) return false;
-            // f.name es lo que vimos en tus logs de "Archivo ejemplo"
-            return f.name === nombreArchivoBuscado;
-        });
-
-        if (fileObj) {
-            console.log("✅ Archivo encontrado físicamente:", fileObj.name);
-            
-            // Verificación del objeto Blob/File para evitar el error de 'Overload resolution'
-            const blobToUse = (fileObj instanceof Blob || fileObj instanceof File) 
-                              ? fileObj 
-                              : (fileObj.file && fileObj.file instanceof Blob ? fileObj.file : null);
-
-            if (blobToUse) {
-                return URL.createObjectURL(blobToUse);
+            if (!zipKey) {
+                const fileName = cleanPath.split('/').pop();
+                zipKey = Object.keys(appState.zipContent.files).find(k =>
+                    k.endsWith('/' + fileName) || k.endsWith(fileName)
+                );
             }
+            if (!zipKey) { console.warn('⚠️ No encontrado en ZIP:', cleanPath); return null; }
+            const blob = await appState.zipContent.file(zipKey).async("blob");
+            return URL.createObjectURL(blob);
+        } else {
+            const fileName = cleanPath.split('/').pop();
+            const file = appState.allFilesFlat.find(f =>
+                f.webkitPath?.endsWith(cleanPath) ||
+                f.webkitPath?.endsWith(fileName) ||
+                f.name === fileName
+            )?.file;
+            if (!file) { console.warn('⚠️ No encontrado localmente:', cleanPath); return null; }
+            return URL.createObjectURL(file);
         }
+    } catch (error) {
+        console.error('❌ Error obteniendo archivo:', error);
+        return null;
     }
-
-    console.error("❌ ERROR FINAL: No existe el archivo:", nombreArchivoBuscado);
-    return null;
 }
 
 // === HELPERS ===
@@ -167,59 +150,62 @@ function showError(message) {
 
 function getCortesPorCarpeta(folderName) {
     const cortes = [];
-    // Determinamos qué estamos buscando basándonos en el nombre de la carpeta
-    const buscarAnalizados = folderName.toLowerCase().includes('analizar');
 
-    console.log(`--- MODO REPARACIÓN: Buscando ${buscarAnalizados ? 'ANALIZADOS' : 'BRUTOS'} ---`);
+    const processFileMatch = (fileName, path, extraProps = {}) => {
+        const key   = fileName.replace(/\.[^.]+$/, '');   // sin extensión
+        const partes = key.split('_');
 
-    appState.allFilesFlat.forEach((item) => {
-        const fileName = item.name;
-        
-        // Solo queremos videos
-        if (fileName.endsWith('.mp4') || fileName.endsWith('.webm')) {
-            const esAnalizado = fileName.includes('_analizado');
+        // Período: partes[1] si coincide con patrón \dP, si no "—"
+        const periodoRaw = partes[1] || '';
+        const periodo    = /^\d+P$/i.test(periodoRaw) ? periodoRaw.toUpperCase() : '—';
 
-            // LÓGICA DE FILTRADO:
-            // Si buscamos analizados y el archivo tiene '_analizado' -> OK
-            // Si buscamos brutos y el archivo NO tiene '_analizado' -> OK
-            if ((buscarAnalizados && esAnalizado) || (!buscarAnalizados && !esAnalizado)) {
-                
-                // Extraemos la info para la lista
-                let key = fileName.replace(/\.[^.]+$/, '').replace('_analizado', '');
-                const partes = key.split('_');
-                
-                // Intentamos sacar el periodo (ej: 1P) y el tiempo (ej: 02m00s)
-                // Ajustado para que funcione aunque el nombre sea corto
-                const periodo = partes.find(p => p.includes('P')) || '—';
-                const tiempo = partes.find(p => p.includes('m')) || '00:00';
-
-                cortes.push({
-                    id: key,
-                    nombre_archivo: fileName,
-                    periodo: periodo,
-                    minuto: tiempo.split('m')[0] || '0',
-                    segundo: tiempo.split('m')[1]?.replace('s', '') || '00',
-                    tipo_jugada: partes[partes.length - 1] || 'Acción',
-                    ruta_relativa: fileName // Usamos solo el nombre ya que no hay carpetas
-                });
-            }
+        // Tiempo: partes[2] → "11m02s"
+        const tiempoRaw = partes[2] || '';
+        let min = '0', seg = '00';
+        if (tiempoRaw.includes('m')) {
+            const temp = tiempoRaw.split('m');
+            min = temp[0];
+            seg = temp[1]?.replace('s', '') || '00';
         }
-    });
 
-    console.log(`✅ ¡Éxito! Encontrados ${cortes.length} clips.`);
+        // Tipo: desde partes[3] en adelante
+        const tipoDesdeNombre = partes.length > 3 ? partes.slice(3).join('_') : 'otros';
+
+        // Buscar en JSON de cortes
+        const corteData = Object.entries(appState.datosCortes || {}).find(([id, c]) =>
+            c.nombre_archivo?.includes(fileName) || id.includes(key)
+        );
+
+        return {
+            id: key,
+            nombre_archivo: fileName,
+            periodo,                                             // ← NUEVO
+            tipo_jugada: (corteData && corteData[1].tipo_jugada) || tipoDesdeNombre,
+            minuto: min,
+            segundo: seg,
+            ruta_relativa: path,
+            ...extraProps,
+            ...(corteData ? corteData[1] : {})
+        };
+    };
+
+    if (appState.sourceType === 'zip') {
+        Object.keys(appState.zipContent.files).forEach(zipPath => {
+            if (zipPath.includes(folderName) && (zipPath.endsWith('.mp4') || zipPath.endsWith('.webm'))) {
+                const fileName = zipPath.split('/').pop();
+                cortes.push(processFileMatch(fileName, `./${folderName}/${fileName}`, { ruta_zip: zipPath }));
+            }
+        });
+    } else {
+        appState.allFilesFlat.forEach(item => {
+            if (item.webkitPath?.includes(folderName) && (item.webkitPath.endsWith('.mp4') || item.webkitPath.endsWith('.webm'))) {
+                cortes.push(processFileMatch(item.name, item.webkitPath));
+            }
+        });
+    }
+
     return cortes;
 }
-
-// Asegúrate de que esta mini-función esté definida o dentro del ámbito
-const processFileMatch = (fileName, path) => {
-    let key = fileName.replace(/\.[^.]+$/, '').replace('_analizado', '');
-    return {
-        id: key,
-        nombre_archivo: fileName,
-        ruta_relativa: path,
-        // (puedes simplificar el resto para la prueba)
-    };
-};
 
 // === PARSEAR VALORACIONES ===
 // Convierte el JSON { cortes: { hacer_cortes: [...], analizar_corte: [...] } }

@@ -1,0 +1,541 @@
+/* ===== VARIABLES DE MARCA (LDRV) ===== */
+:root {
+    --bg-dark: #121212;
+    --card-bg: #1e1e1e;
+    --ldr-blue: #32465a;
+    --ldr-green: #4db3a2;
+    --ldr-gradient: linear-gradient(135deg, #32465a 0%, #4db3a2 100%);
+    --text-main: #ffffff;
+    --text-dim: #b0b0b0;
+    --priority-high: #ff5252;
+    --priority-media: #ffd740;
+    --priority-baja: #4db3a2;   /* ← era #448aff, ahora verde de marca */
+}
+
+/* ===== CONFIGURACIÓN BASE ===== */
+*, *::before, *::after { box-sizing: border-box; }
+
+body.dark-mode {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.text-ldr-green { color: var(--ldr-green); }
+.text-ldr-blue  { color: var(--ldr-green); }
+
+.text-dim {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}
+
+/* ===== BRAND TEXT ===== */
+.ldrv-brand-text {
+    font-size: 0.88rem;
+    letter-spacing: 1px;
+    color: #fff;
+}
+
+/* ===== BOTONES DE NAV (desktop + mobile dropdown) ===== */
+.nav-btn {
+    color: var(--ldr-green) !important;
+    border: 1.5px solid var(--ldr-blue) !important;
+    background: rgba(50, 70, 90, 0.25) !important;
+    border-radius: 8px !important;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.nav-btn:hover,
+.nav-btn.active {
+    background: var(--ldr-gradient) !important;
+    border-color: var(--ldr-green) !important;
+    color: #fff !important;
+    box-shadow: 0 0 12px rgba(77, 179, 162, 0.35);
+}
+
+#main-menu .nav-btn:hover { transform: translateY(-1px); }
+
+/* ===== HAMBURGER BUTTON ===== */
+.hamburger-btn {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 38px;
+    height: 38px;
+    background: rgba(50, 70, 90, 0.3);
+    border: 1.5px solid var(--ldr-blue);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    transition: border-color 0.2s, background 0.2s;
+    flex-shrink: 0;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--ldr-green);
+    border-radius: 2px;
+    transition: transform 0.25s ease, opacity 0.2s;
+}
+
+.hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.open span:nth-child(2) { opacity: 0; }
+.hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.hamburger-btn:hover {
+    border-color: var(--ldr-green);
+    background: rgba(77, 179, 162, 0.12);
+}
+
+/* ===== DROPDOWN MENÚ MÓVIL ===== */
+.mobile-nav-dropdown {
+    background: #0d0d0d;
+    border-top: 1px solid rgba(77, 179, 162, 0.15);
+    padding: 1rem 1rem 1.25rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    animation: slideDown 0.2s ease;
+}
+
+.mobile-nav-dropdown .nav-btn {
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    text-align: left;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== FILTRO PERSONALIZADO ===== */
+.custom-select-ldrv {
+    max-width: 300px;
+    background-color: #000 !important;
+    color: var(--ldr-green) !important;
+    border: 2px solid var(--ldr-blue) !important;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+
+.custom-select-ldrv:focus {
+    border-color: var(--ldr-green) !important;
+    box-shadow: 0 0 10px rgba(77, 179, 162, 0.2);
+    outline: none;
+}
+
+/* ===== SECTION HEADER LDRV ===== */
+.section-header-ldrv {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1.25rem 1.25rem 1rem;
+    border-bottom: 1px solid rgba(77, 179, 162, 0.12);
+    margin-bottom: 1.25rem;
+}
+
+.section-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.section-tag {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ldr-green);
+    opacity: 0.7;
+}
+
+.section-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    letter-spacing: -0.2px;
+    line-height: 1.2;
+}
+
+.section-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.filter-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+/* En móvil el header apila verticalmente */
+@media (max-width: 540px) {
+    .section-header-ldrv {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .section-header-right {
+        width: 100%;
+    }
+    .custom-select-ldrv {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ===== ACORDEONES (LDRV STYLE) ===== */
+.group-accordion {
+    background: var(--card-bg);
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    margin: 0 1rem 1.25rem;
+    overflow: hidden;
+}
+
+.group-accordion summary {
+    padding: 1rem 1.25rem;
+    color: var(--ldr-green);
+    background: rgba(77, 179, 162, 0.04);
+    border-bottom: 1px solid rgba(77, 179, 162, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    list-style: none;           /* oculta la flecha nativa */
+    user-select: none;
+    transition: background 0.2s;
+}
+
+/* Flecha custom con colores de marca */
+.group-accordion summary::after {
+    content: '▶';
+    font-size: 0.65rem;
+    color: var(--ldr-green);
+    transition: transform 0.25s ease;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+}
+
+.group-accordion[open] summary::after {
+    transform: rotate(90deg);
+}
+
+/* Elimina la flecha que añaden algunos navegadores con list-style */
+.group-accordion summary::-webkit-details-marker { display: none; }
+
+.group-accordion summary:hover {
+    background: rgba(77, 179, 162, 0.09);
+}
+
+.count {
+    background: var(--ldr-blue);
+    padding: 2px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* Bordes laterales de prioridad */
+.p-alta  summary { border-left: 5px solid var(--priority-high); }
+.p-media summary { border-left: 5px solid var(--priority-media); }
+.p-baja  summary { border-left: 5px solid var(--priority-baja); }
+
+/* ── Acordeón nivel 1: tipo de jugada ── */
+.accordion-tipo {
+    border: 1px solid rgba(77, 179, 162, 0.18);
+    margin: 0 1rem 1.25rem;
+}
+
+.accordion-tipo > summary {
+    background: rgba(50, 70, 90, 0.35);
+    font-size: 0.88rem;
+    letter-spacing: 0.8px;
+    border-left: 4px solid var(--ldr-green);
+    border-bottom: 1px solid rgba(77, 179, 162, 0.12);
+}
+
+/* ── Acordeón nivel 2: valoración (anidado) ── */
+.accordion-inner-wrap {
+    padding: 0.75rem 0.75rem 0.5rem;
+    background: rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.accordion-inner {
+    margin: 0 !important;           /* sin margen extra al estar dentro del wrap */
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.accordion-inner summary {
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.accordion-inner summary::after {
+    font-size: 0.55rem;
+}
+
+/* Mensaje vacío */
+.empty-msg {
+    color: #777;
+    padding: 2rem 1.5rem;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* ── Etiquetas y notas dentro de la card ── */
+.etiqueta-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--ldr-green);
+    border: 1px solid rgba(77, 179, 162, 0.4);
+    border-radius: 4px;
+    background: rgba(77, 179, 162, 0.08);
+}
+
+.clip-notas {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin: 0.25rem 0 0;
+    line-height: 1.4;
+}
+
+/* ===== BADGE PERÍODO (1P / 2P) ===== */
+.periodo-badge {
+    display: inline-block;
+    padding: 1px 7px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--bg-dark);
+    background: var(--ldr-green);
+    border-radius: 4px;
+    line-height: 1.6;
+    flex-shrink: 0;
+}
+
+/* ===== CARDS DE VÍDEO ===== */
+.video-card-mini {
+    background: #252525;
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #2e2e2e;
+    transition: all 0.3s ease;
+}
+
+.video-card-mini:hover {
+    border-color: var(--ldr-green);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+}
+
+.clip-time {
+    color: #eee;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* ===== BOTÓN PRIMARIO (VER CLIP) ===== */
+.btn-primary,
+.btn-primary:focus,
+.btn-primary:active {
+    background: var(--ldr-gradient) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 10px;
+    border-radius: 8px;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(77, 179, 162, 0.3);
+}
+
+/* ===== PANTALLA DE SUBIDA ===== */
+.upload-container {
+    background: var(--card-bg);
+    border: 1px solid rgba(77, 179, 162, 0.2);
+    border-radius: 15px;
+    padding: 3rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.upload-option-title {
+    color: var(--ldr-green);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+.btn-upload-zip {
+    background: var(--ldr-gradient) !important;
+    border: none !important;
+    color: white !important;
+    padding: 12px 30px !important;
+    font-weight: 800 !important;
+    border-radius: 8px;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(77, 179, 162, 0.2);
+}
+
+.btn-upload-zip:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(77, 179, 162, 0.4);
+}
+
+.btn-upload-folder {
+    background: transparent !important;
+    border: 2px solid var(--ldr-green) !important;
+    color: var(--ldr-green) !important;
+    padding: 10px 30px !important;
+    font-weight: 700 !important;
+    border-radius: 8px;
+    transition: all 0.3s ease !important;
+}
+
+.btn-upload-folder:hover {
+    background: rgba(77, 179, 162, 0.1) !important;
+    color: #fff !important;
+}
+
+.upload-help-text {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
+    font-style: italic;
+}
+
+/* ===== BADGE DE ESTADO / PARTIDO ===== */
+.status-badge-ldr {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    background-color: rgba(50, 70, 90, 0.25);
+    color: var(--ldr-green);
+    border: 1px solid rgba(77, 179, 162, 0.5);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+    text-align: center;
+    animation: pulse-ldr 2.5s infinite ease-in-out;
+}
+
+.status-badge-ldr:not(:empty) {
+    box-shadow: 0 0 12px rgba(77, 179, 162, 0.18);
+}
+
+@keyframes pulse-ldr {
+    0%   { opacity: 1;   transform: scale(1); }
+    50%  { opacity: 0.72; transform: scale(0.985); }
+    100% { opacity: 1;   transform: scale(1); }
+}
+
+/* ===== CONTENT CONTAINER ===== */
+.content-container {
+    padding-bottom: 2rem;
+}
+
+/* ===== MODAL DE VÍDEO ===== */
+#video-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+.modal-content {
+    background: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    max-width: 900px;
+    width: 95%;
+    border: 1px solid rgba(77, 179, 162, 0.25);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-size: 1.6rem;
+    color: var(--ldr-green);
+    cursor: pointer;
+    line-height: 1;
+    z-index: 10;
+    transition: opacity 0.2s;
+}
+
+.close-modal:hover { opacity: 0.7; }
+
+/* ===== GRID ANALIZADOS ===== */
+.grid-container {
+    padding: 0 1rem 2rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 767px) {
+    .upload-container  { padding: 1.75rem 1.25rem; }
+    .video-card-mini   { padding: 1rem; }
+    .video-card-mini .btn-primary { padding: 13px; }
+    .group-accordion   { margin: 0 0.5rem 1rem; }
+
+    /* Badge partido en dropdown móvil */
+    #partido-info-mobile {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        max-width: 100%;
+        text-align: center;
+    }
+}

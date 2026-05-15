@@ -25,19 +25,15 @@ const ui = {
 
             const datosApp = obtenerDatosApp();
 
-            // Configuración Sección VÍDEOS BRUTOS
-            ui.populateJugadaFilter(datosApp.hacer_cortes, 'tipo-jugada-filter');
-            ui.filterAndRender(datosApp.hacer_cortes, 'container-brutos', 'tipo-jugada-filter');
-
-            // Configuración Sección ANALIZADOS (Misma lógica)
-            ui.populateJugadaFilter(datosApp.analizar_corte, 'filtro-analizados');
-            ui.filterAndRender(datosApp.analizar_corte, 'container-analizados', 'filtro-analizados');
+            ui.populateJugadaFilter(datosApp.hacer_cortes);
+            ui.filterAndRender(datosApp.hacer_cortes);
+            ui.renderAgrupado('container-analizados', datosApp.analizar_corte);
 
             const firstBtn = document.querySelector('#main-menu .nav-btn');
             ui.showSection('v-brutos');
             if (firstBtn) ui.setActiveBtn(firstBtn);
 
-            console.log('%c✅ UI inicializada por completo', 'color:green;font-weight:bold');
+            console.log('%c✅ UI inicializada', 'color:green;font-weight:bold');
         } catch (error) {
             console.error('❌ Error inicializando UI:', error);
             alert(`Error: ${error.message}`);
@@ -56,10 +52,10 @@ const ui = {
         if (hamburger) hamburger.classList.remove('open');
     },
 
-    // ── FILTRO GENÉRICO ──────────────────────────────────────────────
+    // ── FILTRO ────────────────────────────────────────────────────────
 
-    populateJugadaFilter: (cortes, selectId) => {
-        const select = document.getElementById(selectId);
+    populateJugadaFilter: (cortes) => {
+        const select = document.getElementById('tipo-jugada-filter');
         if (!select || !cortes || cortes.length === 0) return;
 
         const tipos = [...new Set(cortes.map(c => c.tipo_jugada || c.tipo || 'Sin clasificar'))].sort();
@@ -74,9 +70,9 @@ const ui = {
         });
     },
 
-    filterAndRender: (cortesOriginal, containerId, filterId) => {
-        const filterSelect = document.getElementById(filterId);
-        if (!cortesOriginal) return;
+    filterAndRender: (cortesOriginal) => {
+        const filterSelect = document.getElementById('tipo-jugada-filter');
+        if (!cortesOriginal || cortesOriginal.length === 0) return;
 
         const filterValue = filterSelect ? filterSelect.value : '';
 
@@ -84,7 +80,7 @@ const ui = {
             ? cortesOriginal
             : cortesOriginal.filter(c => (c.tipo_jugada || c.tipo) === filterValue);
 
-        ui.renderAgrupado(containerId, listaFiltrada);
+        ui.renderAgrupado('container-brutos', listaFiltrada);
     },
 
     // ── CARD ──────────────────────────────────────────────────────────
@@ -105,7 +101,6 @@ const ui = {
         const notasHTML = corte.notas
             ? `<p class="clip-notas">"${corte.notas}"</p>` : '';
 
-        // Escapar rutas para JS
         const rutaSafe  = (corte.ruta_relativa || corte.id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         const labelSafe = label.replace(/'/g, "\\'");
 
@@ -129,7 +124,7 @@ const ui = {
         return col;
     },
 
-    // ── ACORDEÓN DE VALORACIÓN ───────────────────────────────────────
+    // ── TOGGLE VALORACIÓN (nivel 2) ───────────────────────────────────
 
     _buildValoracionToggle: (valoracion, cortes) => {
         const cfg = {
@@ -155,7 +150,7 @@ const ui = {
         return details;
     },
 
-    // ── RENDER PRINCIPAL AGRUPADO ────────────────────────────────────
+    // ── RENDER PRINCIPAL: tipo -> valoracion ─────────────────────────
 
     renderAgrupado: (containerId, lista) => {
         const container = document.getElementById(containerId);
@@ -183,6 +178,7 @@ const ui = {
             const tipoLabel    = tipo.replace(/_/g, ' ');
             const tipoCapital  = tipoLabel.charAt(0).toUpperCase() + tipoLabel.slice(1);
 
+            // Toggle externo: tipo de jugada
             const detailsTipo = document.createElement('details');
             detailsTipo.className = 'group-accordion accordion-tipo';
             if (idx === 0) detailsTipo.open = true;
@@ -194,10 +190,10 @@ const ui = {
             `;
             detailsTipo.appendChild(summaryTipo);
 
-            // 2. Agrupar por valoración dentro del tipo
+            // 2. Agrupar por valoracion dentro del tipo
             const porVal = { alta: [], media: [], baja: [] };
             cortesDelTipo.forEach(c => {
-                const v = c.prioridad || 'baja';
+                const v = c.prioridad || c.importancia || 'baja';
                 (porVal[v] || porVal.baja).push(c);
             });
 
@@ -212,6 +208,8 @@ const ui = {
             detailsTipo.appendChild(innerWrap);
             container.appendChild(detailsTipo);
         });
+
+        console.log('Acordeones dobles renderizados');
     },
 
     // ── SECCIONES ─────────────────────────────────────────────────────
@@ -224,23 +222,13 @@ const ui = {
 
     // ── VIDEO ─────────────────────────────────────────────────────────
 
-    // js/ui.js
     playVideo: async (ruta, titulo) => {
-        console.log("--- INTENTO DE REPRODUCCIÓN ---");
-        console.log("1. Ruta recibida en UI:", ruta);
-        console.log("2. Título:", titulo);
-
         const url = await getFileAsset(ruta);
-        
         if (!url) {
-            console.error("3. ERROR: No se generó URL para el video. Ruta no encontrada en el sistema.");
-            alert(`Error: No se encontró el archivo en la ruta: ${ruta}`);
+            alert('No se pudo cargar el video: ' + ruta);
             return;
         }
-
-        console.log("3. ÉXITO: URL de objeto generada:", url);
-
-        const player = document.getElementById('main-player');
+        const player  = document.getElementById('main-player');
         const titleEl = document.getElementById('video-title');
 
         titleEl.innerText = titulo;
@@ -248,12 +236,7 @@ const ui = {
         player.load();
 
         document.getElementById('video-modal').style.display = 'flex';
-        
-        player.play().then(() => {
-            console.log("4. Reproducción iniciada correctamente");
-        }).catch(e => {
-            console.error("4. ERROR al reproducir el video:", e);
-        });
+        setTimeout(() => player.play().catch(e => console.error('Error reproduciendo:', e)), 100);
     },
 
     closeVideo: () => {
@@ -268,25 +251,14 @@ const ui = {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Listener Filtro Brutos
-    const filterBrutos = document.getElementById('tipo-jugada-filter');
-    if (filterBrutos) {
-        filterBrutos.addEventListener('change', () => {
+    const filterSelect = document.getElementById('tipo-jugada-filter');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', () => {
             const datosApp = obtenerDatosApp();
-            ui.filterAndRender(datosApp.hacer_cortes, 'container-brutos', 'tipo-jugada-filter');
+            ui.filterAndRender(datosApp.hacer_cortes);
         });
     }
 
-    // Listener Filtro Analizados
-    const filterAnalizados = document.getElementById('filtro-analizados');
-    if (filterAnalizados) {
-        filterAnalizados.addEventListener('change', () => {
-            const datosApp = obtenerDatosApp();
-            ui.filterAndRender(datosApp.analizar_corte, 'container-analizados', 'filtro-analizados');
-        });
-    }
-
-    // Menú Hamburguesa
     const hamburger = document.getElementById('hamburger-btn');
     const mobileNav = document.getElementById('mobile-nav');
     if (hamburger && mobileNav) {
@@ -297,4 +269,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-console.log('%c✅ ui.js cargado correctamente', 'color: green; font-weight: bold');
+console.log('%c ui.js cargado correctamente', 'color: green; font-weight: bold');
