@@ -1,0 +1,11 @@
+/LDRV-Analisis-User/
+├── index.html          # Estructura principal y navegación
+├── css/
+│   └── style.css       # Diseño "Dark Mode" profesional
+├── js/
+│   ├── app.js          # Orquestador (manejador de carga de archivos)
+│   ├── ui.js           # Renderizado de menús y vistas
+│   ├── video.js        # Lógica de reproducción y filtros
+│   └── canvas.js       # Dibujo de jugadas (campo de fútbol)
+└── lib/
+    └── jszip.min.js    # Librería para leer tu ZIP

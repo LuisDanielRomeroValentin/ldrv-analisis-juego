@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LDRV - ANALISIS MODELO JUEGO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="dark-mode">
+
+    <header class="navbar navbar-dark bg-black border-bottom border-success border-3 sticky-top shadow" id="main-header">
+        <div class="container-fluid px-3 px-md-4 d-flex align-items-center gap-2">
+
+            <!-- LOGO + NOMBRE -->
+            <a class="navbar-brand d-flex align-items-center gap-2 flex-shrink-0 me-0" href="#">
+                <img src="img/logo.png" alt="Logo" height="36">
+                <span class="fw-bold text-uppercase d-none d-sm-inline ldrv-brand-text">LDRV — ANÁLISIS</span>
+            </a>
+
+            <!-- BADGE PARTIDO (solo desktop, centrado) -->
+            <div id="partido-info" class="status-badge-ldr d-none d-md-flex mx-auto">Esperando archivos…</div>
+
+            <!-- MENÚ DESKTOP (≥md) -->
+            <nav id="main-menu" class="d-none d-md-flex align-items-center gap-1 flex-shrink-0 ms-auto" style="visibility:hidden;">
+                <button class="btn nav-btn" onclick="ui.showSection('v-brutos');     ui.setActiveBtn(this)">📹 Vídeos</button>
+                <button class="btn nav-btn" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this)">🎯 Analizados</button>
+                <button class="btn nav-btn" onclick="ui.showSection('graficos');     ui.setActiveBtn(this)">🎮 Gráficos</button>
+            </nav>
+
+            <!-- HAMBURGER (solo móvil) -->
+            <button class="hamburger-btn d-flex d-md-none ms-auto" id="hamburger-btn" style="visibility:hidden;" aria-label="Menú">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+
+        <!-- DROPDOWN MÓVIL (oculto por defecto) -->
+        <div id="mobile-nav" class="mobile-nav-dropdown d-md-none" style="display:none!important;">
+            <!-- badge partido en móvil -->
+            <div id="partido-info-mobile" class="status-badge-ldr mb-2 mx-auto" style="display:none;"></div>
+            <button class="btn nav-btn w-100" onclick="ui.showSection('v-brutos');     ui.setActiveBtn(this); ui.closeMobileMenu()">📹 Vídeos</button>
+            <button class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
+            <button class="btn nav-btn w-100" onclick="ui.showSection('graficos');     ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Gráficos</button>
+        </div>
+    </header>
+
+    <main id="app-container">
+
+        <!-- UPLOAD -->
+        <section id="upload-section" class="container py-5">
+            <div class="upload-container text-center shadow-lg">
+                <div class="row g-4 align-items-center justify-content-center">
+                    <div class="col-12 col-md-5">
+                        <h3 class="upload-option-title">📦 Opción ZIP</h3>
+                        <input type="file" id="zip-input" accept=".zip" hidden>
+                        <label for="zip-input" class="btn btn-upload-zip w-100">Subir .ZIP</label>
+                    </div>
+                    <div class="col-12 col-md-2 fw-bold" style="color:var(--ldr-green)">Ó</div>
+                    <div class="col-12 col-md-5">
+                        <h3 class="upload-option-title">📁 Opción Carpeta</h3>
+                        <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+                        <label for="folder-input" class="btn btn-upload-folder w-100">Seleccionar Carpeta</label>
+                    </div>
+                </div>
+                <p class="upload-help-text">Arrastra tus archivos o carpetas aquí para comenzar el análisis táctico</p>
+            </div>
+        </section>
+
+        <!-- VÍDEOS BRUTOS -->
+        <section id="v-brutos" class="app-section" style="display:none;">
+            <div class="section-header-ldrv">
+                <div class="section-header-left">
+                    <span class="section-tag">VÍDEOS BRUTOS</span>
+                    <h2 class="section-title">Acciones de Juego</h2>
+                </div>
+                <div class="section-header-right">
+                    <label for="tipo-jugada-filter" class="filter-label">Tipo</label>
+                    <select id="tipo-jugada-filter" class="custom-select-ldrv">
+                        <option value="">Todas las jugadas</option>
+                    </select>
+                </div>
+            </div>
+            <div id="container-brutos" class="content-container"></div>
+        </section>
+
+        <!-- ANALIZADOS -->
+        <section id="v-analizados" class="app-section" style="display:none;">
+            <h2>🎯 Cortes Analizados</h2>
+            <div class="grid-container" id="container-analizados"></div>
+        </section>
+
+        <!-- GRÁFICOS -->
+        <section id="graficos" class="app-section" style="display:none;">
+            <h2>🎮 Visualización Táctica</h2>
+            <div class="canvas-layout">
+                <div class="side-panel" id="jugadas-list"></div>
+                <div class="canvas-wrapper">
+                    <canvas id="field-canvas"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ESTADÍSTICAS -->
+        <section id="stats" class="app-section" style="display:none;">
+            <h2>📊 Informe de Rendimiento</h2>
+            <div id="stats-content" class="stats-grid"></div>
+        </section>
+
+    </main>
+
+    <!-- MODAL VÍDEO -->
+    <div id="video-modal" class="modal" style="display:none;" onclick="if(event.target.id==='video-modal') ui.closeVideo()">
+        <div class="modal-content">
+            <span class="close-modal" onclick="ui.closeVideo()">&times;</span>
+            <video id="main-player" controls style="width:100%;height:auto;display:block;"></video>
+            <h3 id="video-title" style="padding:0.85rem 1rem;text-align:center;background:#111;margin:0;font-size:0.95rem;color:var(--ldr-green);"></h3>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>
