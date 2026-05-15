@@ -33,29 +33,36 @@ async function processZip(file) {
         appState.zipContent = zip;
         appState.sourceType = 'zip';
 
-        const pFileName = Object.keys(zip.files).find(f => f.endsWith("datos_partido.json"));
-        const cFileName = Object.keys(zip.files).find(f => f.endsWith("datos_cortes.json"));
-        const vFileName = Object.keys(zip.files).find(f => f.endsWith("valoraciones_cortes.json"));
+        // BUSQUEDA FLEXIBLE: 
+        // f.split('/').pop() extrae solo el nombre del archivo ignorando carpetas previas
+        const pFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "datos_partido.json");
+        const cFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "datos_cortes.json");
+        const vFileName = Object.keys(zip.files).find(f => {
+            const name = f.split('/').pop().toLowerCase();
+            return name.includes("valoracion") && name.endsWith(".json");
+        });
 
-        if (!pFileName) throw new Error('No se encontró datos_partido.json');
-        if (!cFileName) throw new Error('No se encontró datos_cortes.json');
-        if (!vFileName) throw new Error('No se encontró valoraciones_cortes.json');
+        if (!pFileName) throw new Error('No se encontró datos_partido.json en el ZIP');
+        if (!cFileName) throw new Error('No se encontró datos_cortes.json en el ZIP');
+        if (!vFileName) throw new Error('No se encontró valoraciones_cortes.json en el ZIP');
 
+        // Extraemos el contenido
         appState.partidoData      = JSON.parse(await zip.file(pFileName).async("string"));
         appState.datosCortes      = JSON.parse(await zip.file(cFileName).async("string"));
         appState.valoracionCortes = parseValoraciones(JSON.parse(await zip.file(vFileName).async("string")));
 
+        // Mapeo plano para que getFileAsset encuentre los vídeos aunque estén en subcarpetas
         appState.allFilesFlat = Object.keys(zip.files).map(path => ({
             path,
             name: path.split('/').pop(),
-            folder: path.split('/')[0],
+            folder: path.split('/').slice(0, -1).join('/'),
             isFile: !zip.files[path].dir
         }));
 
         ui.initApp();
     } catch (error) {
         console.error('❌ Error en ZIP:', error);
-        showError(`Error procesando ZIP: ${error.message}`);
+        showError(`Error: ${error.message}`);
     }
 }
 
