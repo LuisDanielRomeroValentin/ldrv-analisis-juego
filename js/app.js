@@ -35,11 +35,11 @@ async function processZip(file) {
 
         const pFileName = Object.keys(zip.files).find(f => f.endsWith("datos_partido.json"));
         const cFileName = Object.keys(zip.files).find(f => f.endsWith("datos_cortes.json"));
-        const vFileName = Object.keys(zip.files).find(f => f.endsWith("valoracion_cortes.json"));
+        const vFileName = Object.keys(zip.files).find(f => f.endsWith("valoraciones_cortes.json"));
 
         if (!pFileName) throw new Error('No se encontró datos_partido.json');
         if (!cFileName) throw new Error('No se encontró datos_cortes.json');
-        if (!vFileName) throw new Error('No se encontró valoracion_cortes.json');
+        if (!vFileName) throw new Error('No se encontró valoraciones_cortes.json');
 
         appState.partidoData      = JSON.parse(await zip.file(pFileName).async("string"));
         appState.datosCortes      = JSON.parse(await zip.file(cFileName).async("string"));
