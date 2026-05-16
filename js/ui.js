@@ -33,6 +33,20 @@ const ui = {
             ui.populateJugadaFilter(datosApp.analizar_corte, 'filtro-analizados');
             ui.filterAndRender(datosApp.analizar_corte, 'container-analizados', 'filtro-analizados');
 
+            // 📋 INICIALIZACIÓN MÓDULO JUGADAS TÁCTICAS
+            // Si hay datos de jugadas cargados en el JSON, preparamos sus desplegables
+            console.log("--- COMPROBACIÓN UI PARA JUGADAS ---");
+            console.log("¿Existe el objeto plays?:", typeof plays !== 'undefined');
+            console.log("¿Qué hay en appState.jugadasData en este momento?:", appState.jugadasData);
+
+            if (typeof plays !== 'undefined' && appState.jugadasData && appState.jugadasData.length > 0) {
+                console.log("✅ Condición superada. Inicializando Pizarra Táctica...");
+                plays.init();
+                plays.cargarTiposDisponibles();
+            } else {
+                console.warn("⚠️ No se inicializó la pizarra porque falló la condición del IF.");
+            }
+
             const firstBtn = document.querySelector('#main-menu .nav-btn');
             ui.showSection('v-brutos');
             if (firstBtn) ui.setActiveBtn(firstBtn);
@@ -217,14 +231,20 @@ const ui = {
     // ── SECCIONES ─────────────────────────────────────────────────────
 
     showSection: (sectionId) => {
-        document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
+        // Oculta todas las secciones con la clase común
+        document.querySelectorAll('.app-section, .tab-content').forEach(s => s.style.display = 'none');
+        
         const section = document.getElementById(sectionId);
         if (section) section.style.display = 'block';
+
+        // 🛑 Seguridad táctica: si salimos de la pestaña de gráficos/jugadas, forzamos parar la animación activa
+        if (sectionId !== 'jugadas-section' && typeof plays !== 'undefined' && plays.stopAnimacion) {
+            plays.stopAnimacion();
+        }
     },
 
     // ── VIDEO ─────────────────────────────────────────────────────────
 
-    // js/ui.js
     playVideo: async (ruta, titulo) => {
         console.log("--- INTENTO DE REPRODUCCIÓN ---");
         console.log("1. Ruta recibida en UI:", ruta);
@@ -285,6 +305,28 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.filterAndRender(datosApp.analizar_corte, 'container-analizados', 'filtro-analizados');
         });
     }
+
+    // 🛠️ Controladores del Menú de Navegación de Pestañas
+    document.querySelectorAll('#main-menu .nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            ui.setActiveBtn(e.currentTarget);
+            
+            // Evaluamos a qué sección debe apuntar según el botón pulsado
+            const btnId = e.currentTarget.id;
+            if (btnId === 'btn-nav-brutos') {
+                ui.showSection('v-brutos');
+            } else if (btnId === 'btn-nav-analizados') {
+                ui.showSection('v-analizados');
+            } else if (btnId === 'btn-nav-jugadas') {
+                ui.showSection('jugadas-section');
+                // Al entrar de primeras, recalculamos el tamaño y repintamos el lienzo
+                if (typeof plays !== 'undefined') {
+                    plays.init();
+                    plays.cargarTiposDisponibles();
+                }
+            }
+        });
+    });
 
     // Menú Hamburguesa
     const hamburger = document.getElementById('hamburger-btn');

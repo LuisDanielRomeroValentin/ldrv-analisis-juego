@@ -6,7 +6,8 @@ const appState = {
     partidoData: null,
     datosCortes: null,
     valoracionCortes: null,
-    tomaDatos: null
+    tomaDatos: null,
+    jugadasData: [] // 👈 Almacén para los archivos JSON tácticos
 };
 
 console.log('%c📱 LDRV iniciado', 'color: green; font-weight: bold; font-size: 14px');
@@ -33,8 +34,7 @@ async function processZip(file) {
         appState.zipContent = zip;
         appState.sourceType = 'zip';
 
-        // BUSQUEDA FLEXIBLE: 
-        // f.split('/').pop() extrae solo el nombre del archivo ignorando carpetas previas
+        // BUSQUEDA FLEXIBLE DE CONFIGURACIONES PRINCIPALES:
         const pFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "datos_partido.json");
         const cFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "datos_cortes.json");
         const vFileName = Object.keys(zip.files).find(f => {
@@ -46,18 +46,35 @@ async function processZip(file) {
         if (!cFileName) throw new Error('No se encontró datos_cortes.json en el ZIP');
         if (!vFileName) throw new Error('No se encontró valoraciones_cortes.json en el ZIP');
 
-        // Extraemos el contenido
+        // Extraemos el contenido principal
         appState.partidoData      = JSON.parse(await zip.file(pFileName).async("string"));
         appState.datosCortes      = JSON.parse(await zip.file(cFileName).async("string"));
         appState.valoracionCortes = parseValoraciones(JSON.parse(await zip.file(vFileName).async("string")));
 
-        // Mapeo plano para que getFileAsset encuentre los vídeos aunque estén en subcarpetas
+        // Mapeo plano de todos los archivos del ZIP
         appState.allFilesFlat = Object.keys(zip.files).map(path => ({
             path,
             name: path.split('/').pop(),
             folder: path.split('/').slice(0, -1).join('/'),
             isFile: !zip.files[path].dir
         }));
+
+        // 📋 CARGA DE JUGADAS TÁCTICAS DESDE ZIP
+        appState.jugadasData = [];
+        const jugadasZipPaths = Object.keys(zip.files).filter(path => {
+            const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
+            return normalizedPath.includes('dibujar_jugadas/') && normalizedPath.endsWith('.json');
+        });
+
+        for (const path of jugadasZipPaths) {
+            try {
+                const contentStr = await zip.file(path).async("string");
+                appState.jugadasData.push(JSON.parse(contentStr));
+            } catch (e) {
+                console.error("❌ Error parseando jugada en ZIP:", path, e);
+            }
+        }
+        console.log(`📋 Jugadas tácticas cargadas desde ZIP: ${appState.jugadasData.length}`);
 
         ui.initApp();
     } catch (error) {
@@ -92,6 +109,29 @@ async function processFolder(files) {
             folder: f.webkitRelativePath ? f.webkitRelativePath.split('/')[0] : ''
         }));
 
+        // 📋 CARGA DE JUGADAS TÁCTICAS DESDE CARPETA LOCAL
+        appState.jugadasData = [];
+        const jugadasFiles = files.filter(f => {
+            const normalizedPath = f.webkitRelativePath.replace(/\\/g, '/').toLowerCase();
+            return normalizedPath.includes('dibujar_jugadas/') && f.name.endsWith('.json');
+        });
+
+        for (const file of jugadasFiles) {
+            try {
+                const jsonContent = JSON.parse(await file.text());
+                appState.jugadasData.push(jsonContent);
+            } catch (e) {
+                console.error("❌ Error parseando jugada local:", file.name, e);
+            }
+        }
+        console.log(`📋 Jugadas tácticas cargadas desde carpeta: ${appState.jugadasData.length}`);
+        // 🔴 AÑADE ESTE LOG:
+        console.log("--- INSPECCIÓN DE JUGADAS TÁCTICAS CARGADAS ---");
+        console.log("Contenido completo de appState.jugadasData:", appState.jugadasData);
+        if (appState.jugadasData.length > 0) {
+            console.log("Estructura de la primera jugada detectada:", appState.jugadasData[0]);
+        }
+
         ui.initApp();
     } catch (error) {
         console.error('❌ Error en carpeta:', error);
@@ -102,18 +142,13 @@ async function processFolder(files) {
 // === OBTENER ARCHIVO COMO BLOB ===
 
 async function getFileAsset(rutaRelativa) {
-    // 1. Extraemos solo el nombre del archivo (ej: 03_1P_..._analizado.mp4)
-    // Esto es vital porque tus logs mostraron que el navegador no guarda las carpetas
     const nombreArchivoBuscado = rutaRelativa.split('/').pop().trim();
-
     console.log("🔍 Intentando cargar archivo:", nombreArchivoBuscado);
 
     if (appState.sourceType === 'zip') {
-        // --- LÓGICA PARA ZIP (Aquí sí solemos tener rutas) ---
         let file = appState.zipContent.file(rutaRelativa);
         
         if (!file) {
-            // Si no lo encuentra por ruta completa, buscamos por nombre dentro del ZIP
             const realPath = Object.keys(appState.zipContent.files).find(path => 
                 path.replace(/\\/g, '/').endsWith(nombreArchivoBuscado)
             );
@@ -125,18 +160,14 @@ async function getFileAsset(rutaRelativa) {
             return URL.createObjectURL(blob);
         }
     } else {
-        // --- LÓGICA PARA CARPETA LOCAL ---
-        // Buscamos el archivo comparando exclusivamente el nombre
         const fileObj = appState.allFilesFlat.find(f => {
             if (!f) return false;
-            // f.name es lo que vimos en tus logs de "Archivo ejemplo"
             return f.name === nombreArchivoBuscado;
         });
 
         if (fileObj) {
             console.log("✅ Archivo encontrado físicamente:", fileObj.name);
             
-            // Verificación del objeto Blob/File para evitar el error de 'Overload resolution'
             const blobToUse = (fileObj instanceof Blob || fileObj instanceof File) 
                               ? fileObj 
                               : (fileObj.file && fileObj.file instanceof Blob ? fileObj.file : null);
@@ -159,15 +190,10 @@ function showError(message) {
 
 // ─────────────────────────────────────────────────────────────
 //  Formato nombre archivo: 04_1P_11m02s_abp_corner.mp4
-//  partes[0] = número orden  → "04"
-//  partes[1] = período        → "1P" | "2P"
-//  partes[2] = tiempo         → "11m02s"
-//  partes[3..] = tipo jugada  → "abp_corner"
 // ─────────────────────────────────────────────────────────────
 
 function getCortesPorCarpeta(folderName) {
     const cortes = [];
-    // Determinamos qué estamos buscando basándonos en el nombre de la carpeta
     const buscarAnalizados = folderName.toLowerCase().includes('analizar');
 
     console.log(`--- MODO REPARACIÓN: Buscando ${buscarAnalizados ? 'ANALIZADOS' : 'BRUTOS'} ---`);
@@ -175,21 +201,14 @@ function getCortesPorCarpeta(folderName) {
     appState.allFilesFlat.forEach((item) => {
         const fileName = item.name;
         
-        // Solo queremos videos
         if (fileName.endsWith('.mp4') || fileName.endsWith('.webm')) {
             const esAnalizado = fileName.includes('_analizado');
 
-            // LÓGICA DE FILTRADO:
-            // Si buscamos analizados y el archivo tiene '_analizado' -> OK
-            // Si buscamos brutos y el archivo NO tiene '_analizado' -> OK
             if ((buscarAnalizados && esAnalizado) || (!buscarAnalizados && !esAnalizado)) {
                 
-                // Extraemos la info para la lista
                 let key = fileName.replace(/\.[^.]+$/, '').replace('_analizado', '');
                 const partes = key.split('_');
                 
-                // Intentamos sacar el periodo (ej: 1P) y el tiempo (ej: 02m00s)
-                // Ajustado para que funcione aunque el nombre sea corto
                 const periodo = partes.find(p => p.includes('P')) || '—';
                 const tiempo = partes.find(p => p.includes('m')) || '00:00';
 
@@ -199,8 +218,9 @@ function getCortesPorCarpeta(folderName) {
                     periodo: periodo,
                     minuto: tiempo.split('m')[0] || '0',
                     segundo: tiempo.split('m')[1]?.replace('s', '') || '00',
-                    tipo_jugada: partes[partes.length - 1] || 'Acción',
-                    ruta_relativa: fileName // Usamos solo el nombre ya que no hay carpetas
+                    // 🛠️ Reparado: Une usando espacios para mejorar la visualización estética
+                    tipo_jugada: partes.slice(3).join(' ') || 'Acción',
+                    ruta_relativa: fileName
                 });
             }
         }
@@ -210,20 +230,15 @@ function getCortesPorCarpeta(folderName) {
     return cortes;
 }
 
-// Asegúrate de que esta mini-función esté definida o dentro del ámbito
 const processFileMatch = (fileName, path) => {
     let key = fileName.replace(/\.[^.]+$/, '').replace('_analizado', '');
     return {
         id: key,
         nombre_archivo: fileName,
         ruta_relativa: path,
-        // (puedes simplificar el resto para la prueba)
     };
 };
 
-// === PARSEAR VALORACIONES ===
-// Convierte el JSON { cortes: { hacer_cortes: [...], analizar_corte: [...] } }
-// en un mapa plano indexado por nombre_archivo para búsqueda rápida
 function parseValoraciones(raw) {
     const mapa = {};
     const secciones = raw?.cortes || {};
@@ -241,7 +256,6 @@ function parseValoraciones(raw) {
 
 function enriquecerCortes(cortes) {
     return cortes.map(corte => {
-        // Buscar por nombre_archivo exacto, luego por nombre sin extensión
         const val = appState.valoracionCortes?.[corte.nombre_archivo]
                  || appState.valoracionCortes?.[corte.nombre_archivo?.replace(/\.[^.]+$/, '') + '.mp4']
                  || null;
@@ -250,7 +264,7 @@ function enriquecerCortes(cortes) {
             ...corte,
             prioridad:   val?.prioridad   || 'baja',
             etiquetas:   val?.etiquetas   || [],
-            notas:       val?.notas       || ''
+            notes:       val?.notas       || ''
         };
     });
 }

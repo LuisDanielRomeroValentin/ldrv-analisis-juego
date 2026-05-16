@@ -13,41 +13,34 @@
     <header class="navbar navbar-dark bg-black border-bottom border-success border-3 sticky-top shadow" id="main-header">
         <div class="container-fluid px-3 px-md-4 d-flex align-items-center gap-2">
 
-            <!-- LOGO + NOMBRE -->
             <a class="navbar-brand d-flex align-items-center gap-2 flex-shrink-0 me-0" href="#">
                 <img src="img/logo.png" alt="Logo" height="36">
-                <span class="fw-bold text-uppercase d-none d-sm-inline ldrv-brand-text">LDRV — ANÁLISIS</span>
+                <span class="fw-bold text-uppercase d-none d-sm-inline ldrv-brand-text">Luis Daniel Romero Valentín (LDRV)</span>
             </a>
 
-            <!-- BADGE PARTIDO (solo desktop, centrado) -->
             <div id="partido-info" class="status-badge-ldr d-none d-md-flex mx-auto">Esperando archivos…</div>
 
-            <!-- MENÚ DESKTOP (≥md) -->
             <nav id="main-menu" class="d-none d-md-flex align-items-center gap-1 flex-shrink-0 ms-auto" style="visibility:hidden;">
-                <button class="btn nav-btn" onclick="ui.showSection('v-brutos');     ui.setActiveBtn(this)">📹 Vídeos</button>
-                <button class="btn nav-btn" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this)">🎯 Analizados</button>
-                <button class="btn nav-btn" onclick="ui.showSection('graficos');     ui.setActiveBtn(this)">🎮 Gráficos</button>
+                <button id="btn-nav-brutos" class="btn nav-btn">📹 Vídeos</button>
+                <button id="btn-nav-analizados" class="btn nav-btn">🎯 Analizados</button>
+                <button id="btn-nav-jugadas" class="btn nav-btn">🎮 Pizarra Táctica</button>
             </nav>
 
-            <!-- HAMBURGER (solo móvil) -->
             <button class="hamburger-btn d-flex d-md-none ms-auto" id="hamburger-btn" style="visibility:hidden;" aria-label="Menú">
                 <span></span><span></span><span></span>
             </button>
         </div>
 
-        <!-- DROPDOWN MÓVIL (oculto por defecto) -->
         <div id="mobile-nav" class="mobile-nav-dropdown d-md-none" style="display:none!important;">
-            <!-- badge partido en móvil -->
             <div id="partido-info-mobile" class="status-badge-ldr mb-2 mx-auto" style="display:none;"></div>
-            <button class="btn nav-btn w-100" onclick="ui.showSection('v-brutos');     ui.setActiveBtn(this); ui.closeMobileMenu()">📹 Vídeos</button>
-            <button class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
-            <button class="btn nav-btn w-100" onclick="ui.showSection('graficos');     ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Gráficos</button>
+            <button id="btn-nav-brutos-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-brutos'); ui.setActiveBtn(this); ui.closeMobileMenu()">📹 Vídeos</button>
+            <button id="btn-nav-analizados-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
+            <button id="btn-nav-jugadas-mobile" class="btn nav-btn w-100" onclick="ui.showSection('jugadas-section'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Pizarra Táctica</button>
         </div>
     </header>
 
     <main id="app-container">
 
-        <!-- UPLOAD -->
         <section id="upload-section" class="container py-5">
             <div class="upload-container text-center shadow-lg">
                 <div class="row g-4 align-items-center justify-content-center">
@@ -67,7 +60,6 @@
             </div>
         </section>
 
-        <!-- VÍDEOS BRUTOS -->
         <section id="v-brutos" class="app-section" style="display:none;">
             <div class="section-header-ldrv">
                 <div class="section-header-left">
@@ -84,7 +76,6 @@
             <div id="container-brutos" class="content-container"></div>
         </section>
 
-        <!-- ANALIZADOS -->
         <section id="v-analizados" class="app-section" style="display:none;">
             <div class="section-header-ldrv">
                 <div class="section-header-left">
@@ -101,18 +92,53 @@
             <div id="container-analizados" class="content-container"></div>
         </section>
 
-        <!-- GRÁFICOS -->
-        <section id="graficos" class="app-section" style="display:none;">
-            <h2>🎮 Visualización Táctica</h2>
-            <div class="canvas-layout">
-                <div class="side-panel" id="jugadas-list"></div>
-                <div class="canvas-wrapper">
-                    <canvas id="field-canvas"></canvas>
+        <section id="jugadas-section" class="app-section" style="display:none;">
+            <div class="section-header-ldrv mb-2">
+                <div class="section-header-left">
+                    <span class="section-tag" style="color: var(--ldr-green);">ANÁLISIS EVOLUCIONADO</span>
+                    <h2 class="section-title">Pizarra Táctica Interactiva</h2>
                 </div>
+                <div class="section-header-right d-flex gap-2 align-items-center">
+                    <select id="play-mode-select" class="custom-select-ldrv" style="border-color: var(--ldr-green); max-width: 220px;">
+                        <option value="individual">1. Clip Individual</option>
+                        <option value="secuencial-acumulado">2. Playlist Histórica Acumulada</option>
+                        <option value="mapa-calor">3. Mapa de Calor (Por Cuadrícula)</option>
+                        <option value="red-pases">4. Red de Pases (Por Orden de Secuencia)</option>
+                    </select>
+                    
+                    <select id="play-type-select" class="custom-select-ldrv" style="max-width: 160px;">
+                        <option value="">Filtrar Tipo...</option>
+                    </select>
+                    
+                    <select id="play-file-select" class="custom-select-ldrv" style="max-width: 200px;" disabled>
+                        <option value="">Selecciona una jugada...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="play-info-banner" class="alert alert-dark py-1 mb-2 text-center text-uppercase fw-bold border-success" style="background: #111; font-size: 0.85rem; display: none; color: #10b981;">
+                Esperando inicio...
+            </div>
+
+            <div class="canvas-container-fixed">
+                <canvas id="field-canvas" class="shadow-lg"></canvas>
+            </div>
+
+            <div class="canvas-controls-bar mt-2 d-flex justify-content-center align-items-center gap-2">
+                <button id="btn-play-animation" class="btn btn-success btn-sm px-4 fw-bold" disabled>▶ REPRODUCIR</button>
+                <button id="btn-pause-animation" class="btn btn-warning btn-sm text-dark px-4 fw-bold" disabled>⏸ PAUSAR</button>
+                <button id="btn-reset-animation" class="btn btn-secondary btn-sm px-4 fw-bold" disabled>🔄 REINICIAR</button>
+                
+                <select id="play-speed-select" class="custom-select-ldrv" style="max-width: 110px; border-color: var(--ldr-green);">
+                    <option value="0.0125">🐢 0.25x</option>
+                    <option value="0.025">⏳ 0.50x</option>
+                    <option value="0.05" selected>⚡ 1.00x (Normal)</option>
+                    <option value="0.1">🚀 2.00x</option>
+                </select>
             </div>
         </section>
 
-        <!-- ESTADÍSTICAS -->
+
         <section id="stats" class="app-section" style="display:none;">
             <h2>📊 Informe de Rendimiento</h2>
             <div id="stats-content" class="stats-grid"></div>
@@ -120,7 +146,6 @@
 
     </main>
 
-    <!-- MODAL VÍDEO -->
     <div id="video-modal" class="modal" style="display:none;" onclick="if(event.target.id==='video-modal') ui.closeVideo()">
         <div class="modal-content">
             <span class="close-modal" onclick="ui.closeVideo()">&times;</span>
@@ -131,5 +156,6 @@
 
     <script src="js/app.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/plays.js"></script>
 </body>
 </html>
