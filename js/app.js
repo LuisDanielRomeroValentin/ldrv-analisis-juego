@@ -1,3 +1,5 @@
+// js/app.js
+
 const appState = {
     sourceType: null,
     zipContent: null,
@@ -7,7 +9,8 @@ const appState = {
     datosCortes: null,
     valoracionCortes: null,
     tomaDatos: null,
-    jugadasData: [] // 👈 Almacén para los archivos JSON tácticos
+    jugadasData: [],
+    impactosPorteriaData: [] // 🥅 Almacén oficial para los impactos de portería planos
 };
 
 console.log('%c📱 LDRV iniciado', 'color: green; font-weight: bold; font-size: 14px');
@@ -76,6 +79,26 @@ async function processZip(file) {
         }
         console.log(`📋 Jugadas tácticas cargadas desde ZIP: ${appState.jugadasData.length}`);
 
+        // 🥅 CARGA DE IMPACTOS PORTERÍA DESDE ZIP (Añadido)
+        appState.impactosPorteriaData = [];
+        const impactosZipPaths = Object.keys(zip.files).filter(path => {
+            const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
+            return normalizedPath.includes('impacto_porteria/') && normalizedPath.endsWith('.json');
+        });
+
+        for (const path of impactosZipPaths) {
+            try {
+                const contentStr = await zip.file(path).async("string");
+                appState.impactosPorteriaData.push(JSON.parse(contentStr));
+            } catch (e) {
+                console.error("❌ Error parseando impacto en ZIP:", path, e);
+            }
+        }
+        console.log(`🥅 Archivos de impacto cargados desde ZIP: ${appState.impactosPorteriaData.length}`);
+
+        // ── INSERCIÓN: RELLENAR SELECTOR DE TIPOS DE IMPACTOS TRAS LA CARGA ZIP ──
+        poblarFiltroTiposImpactos(appState.impactosPorteriaData);
+
         ui.initApp();
     } catch (error) {
         console.error('❌ Error en ZIP:', error);
@@ -125,12 +148,33 @@ async function processFolder(files) {
             }
         }
         console.log(`📋 Jugadas tácticas cargadas desde carpeta: ${appState.jugadasData.length}`);
-        // 🔴 AÑADE ESTE LOG:
+        
+        // 🥅 CARGA DE IMPACTOS PORTERÍA DESDE CARPETA LOCAL (Añadido)
+        appState.impactosPorteriaData = [];
+        const impactosFiles = files.filter(f => {
+            const normalizedPath = f.webkitRelativePath.replace(/\\/g, '/').toLowerCase();
+            return normalizedPath.includes('impacto_porteria/') && f.name.endsWith('.json');
+        });
+
+        for (const file of impactosFiles) {
+            try {
+                const jsonContent = JSON.parse(await file.text());
+                appState.impactosPorteriaData.push(jsonContent);
+            } catch (e) {
+                console.error("❌ Error parseando impacto local:", file.name, e);
+            }
+        }
+        console.log(`🥅 Archivos de impacto cargados desde carpeta: ${appState.impactosPorteriaData.length}`);
+
+        // 🔴 TUS LOGS DE INSPECCIÓN ORIGINALES:
         console.log("--- INSPECCIÓN DE JUGADAS TÁCTICAS CARGADAS ---");
         console.log("Contenido completo de appState.jugadasData:", appState.jugadasData);
         if (appState.jugadasData.length > 0) {
             console.log("Estructura de la primera jugada detectada:", appState.jugadasData[0]);
         }
+
+        // ── INSERCIÓN: RELLENAR SELECTOR DE TIPOS DE IMPACTOS TRAS LA CARGA LOCAL ──
+        poblarFiltroTiposImpactos(appState.impactosPorteriaData);
 
         ui.initApp();
     } catch (error) {
@@ -212,13 +256,12 @@ function getCortesPorCarpeta(folderName) {
                 const periodo = partes.find(p => p.includes('P')) || '—';
                 const tiempo = partes.find(p => p.includes('m')) || '00:00';
 
-                cortes.push({
+                 cortes.push({
                     id: key,
                     nombre_archivo: fileName,
                     periodo: periodo,
                     minuto: tiempo.split('m')[0] || '0',
                     segundo: tiempo.split('m')[1]?.replace('s', '') || '00',
-                    // 🛠️ Reparado: Une usando espacios para mejorar la visualización estética
                     tipo_jugada: partes.slice(3).join(' ') || 'Acción',
                     ruta_relativa: fileName
                 });
@@ -239,21 +282,6 @@ const processFileMatch = (fileName, path) => {
     };
 };
 
-function parseValoraciones(raw) {
-    const mapa = {};
-    const secciones = raw?.cortes || {};
-    Object.values(secciones).forEach(lista => {
-        if (!Array.isArray(lista)) return;
-        lista.forEach(item => {
-            if (item.nombre_archivo) {
-                mapa[item.nombre_archivo] = item;
-            }
-        });
-    });
-    console.log('✅ Valoraciones indexadas:', Object.keys(mapa).length, 'entradas');
-    return mapa;
-}
-
 function enriquecerCortes(cortes) {
     return cortes.map(corte => {
         const val = appState.valoracionCortes?.[corte.nombre_archivo]
@@ -269,11 +297,49 @@ function enriquecerCortes(cortes) {
     });
 }
 
+function parseValoraciones(raw) {
+    const mapa = {};
+    const secciones = raw?.cortes || {};
+    Object.values(secciones).forEach(lista => {
+        if (!Array.isArray(lista)) return;
+        lista.forEach(item => {
+            if (item.nombre_archivo) {
+                mapa[item.nombre_archivo] = item;
+            }
+        });
+    });
+    console.log('✅ Valoraciones indexadas:', Object.keys(mapa).length, 'entradas');
+    return mapa;
+}
+
 function obtenerDatosApp() {
     return {
         hacer_cortes:  enriquecerCortes(getCortesPorCarpeta('hacer_cortes')),
         analizar_corte: enriquecerCortes(getCortesPorCarpeta('analizar_corte'))
     };
+}
+
+// ── INSERCIÓN: FUNCIÓN INYECTORA DE OPCIONES ÚNICAS DE TIPO EN EL DOM ──
+function poblarFiltroTiposImpactos(datosImpactos) {
+    const selectTipo = document.getElementById('impactos-tipo-filter');
+    if (!selectTipo) return;
+
+    const tiposUnicos = new Set();
+    datosImpactos.forEach(item => {
+        // Soporte elástico por si tus llaves JSON vienen como 'tipo_jugada' o 'tipo'
+        const tipo = item.tipo_jugada || item.tipo;
+        if (tipo) tiposUnicos.add(tipo.trim());
+    });
+
+    selectTipo.innerHTML = '<option value="TODOS">Todos los tipos</option>';
+
+    tiposUnicos.forEach(tipo => {
+        const option = document.createElement('option');
+        option.value = tipo;
+        option.textContent = tipo;
+        selectTipo.appendChild(option);
+    });
+    console.log(`🎯 Selector '#impactos-tipo-filter' cargado con ${tiposUnicos.size} tipos únicos.`);
 }
 
 console.log('%c✅ app.js cargado correctamente', 'color: green; font-weight: bold');

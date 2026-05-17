@@ -23,6 +23,7 @@
             <nav id="main-menu" class="d-none d-md-flex align-items-center gap-1 flex-shrink-0 ms-auto" style="visibility:hidden;">
                 <button id="btn-nav-brutos" class="btn nav-btn">📹 Vídeos</button>
                 <button id="btn-nav-analizados" class="btn nav-btn">🎯 Analizados</button>
+                <button id="btn-nav-tiros" class="btn nav-btn">🥅 Impactos Portería</button>
                 <button id="btn-nav-jugadas" class="btn nav-btn">🎮 Pizarra Táctica</button>
             </nav>
 
@@ -35,6 +36,7 @@
             <div id="partido-info-mobile" class="status-badge-ldr mb-2 mx-auto" style="display:none;"></div>
             <button id="btn-nav-brutos-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-brutos'); ui.setActiveBtn(this); ui.closeMobileMenu()">📹 Vídeos</button>
             <button id="btn-nav-analizados-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
+            <button id="btn-nav-tiros-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-impactos'); ui.setActiveBtn(this); ui.closeMobileMenu()">🥅 Impactos Portería</button>
             <button id="btn-nav-jugadas-mobile" class="btn nav-btn w-100" onclick="ui.showSection('jugadas-section'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Pizarra Táctica</button>
         </div>
     </header>
@@ -92,6 +94,52 @@
             <div id="container-analizados" class="content-container"></div>
         </section>
 
+        <section id="v-impactos" class="app-section" style="display:none;">
+            <div class="section-header-ldrv mb-2">
+                <div class="section-header-left">
+                    <span class="section-tag" style="color: var(--ldr-green);">ZONA DE FINALIZACIÓN</span>
+                    <h2 class="section-title">Mapa de Impactos FIFA (Estructura 2D)</h2>
+                </div>
+                <div class="section-header-right d-flex gap-2 align-items-center">
+                    <label for="impactos-periodo-filter" class="filter-label">Periodo</label>
+                    <select id="impactos-periodo-filter" class="custom-select-ldrv" style="max-width: 110px;">
+                        <option value="TODOS">Todos</option>
+                        <option value="1P">1ª Parte (1P)</option>
+                        <option value="2P">2ª Parte (2P)</option>
+                    </select>
+
+                    <label for="impactos-tipo-filter" class="filter-label">Tipo</label>
+                    <select id="impactos-tipo-filter" class="custom-select-ldrv" style="max-width: 180px;">
+                        <option value="TODOS">Todos los tipos</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="impactos-info-banner" class="alert alert-dark py-1 mb-2 text-center text-uppercase fw-bold border-success" style="background: #111; font-size: 0.85rem; color: #10b981;">
+                Esperando carga de datos...
+            </div>
+
+            <div class="container-fluid px-0">
+                <div class="row g-3">
+                    <div class="col-12 col-lg-9">
+                        <div class="canvas-container-fixed mb-0 w-100 overflow-auto" style="-webkit-overflow-scrolling: touch;">
+                            <canvas id="shots-canvas" class="shadow-lg" style="max-width: 100%; height: auto; display: block; margin: 0 auto;"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 col-lg-3 d-flex flex-column">
+                        <div class="timeline-header mb-2 d-flex justify-content-between align-items-center mt-2 mt-lg-0 px-1">
+                            <h5 class="text-white m-0 small fw-bold" style="letter-spacing: 0.5px;">⏱️ CRONOLOGÍA</h5>
+                            <span class="badge bg-success" id="total-impactos-badge">0</span>
+                        </div>
+                        
+                        <div id="lista-cronologica-impactos" class="timeline-responsive-container" style="max-height: 480px; overflow-y: auto;">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="jugadas-section" class="app-section" style="display:none;">
             <div class="section-header-ldrv mb-2">
                 <div class="section-header-left">
@@ -138,7 +186,6 @@
             </div>
         </section>
 
-
         <section id="stats" class="app-section" style="display:none;">
             <h2>📊 Informe de Rendimiento</h2>
             <div id="stats-content" class="stats-grid"></div>
@@ -157,5 +204,6 @@
     <script src="js/app.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/plays.js"></script>
+    <script src="js/shots.js"></script>
 </body>
 </html>
