@@ -55,24 +55,26 @@ async function processZip(file) {
         appState.partidoData      = JSON.parse(await zip.file(pFileName).async("string"));
         appState.datosCortes      = JSON.parse(await zip.file(cFileName).async("string"));
         appState.valoracionCortes = parseValoraciones(JSON.parse(await zip.file(vFileName).async("string")));
-
-        // 3. Procesamiento del resumen (asegurando sincronía)
+        
+        // 3. Carga SEGURA del resumen (Si no existe, no falla, pero avisa)
         if (rFileName) {
             try {
-                const rContent = await zip.file(rFileName).async("string");
-                appState.resumenInformeData = JSON.parse(rContent);
+                appState.resumenInformeData = JSON.parse(await zip.file(rFileName).async("string"));
                 
-                // Mostrar botones tras confirmar carga
+                // Mostrar botones solo si el archivo existe
                 const btnNav = document.getElementById('btn-nav-resumen');
                 const btnNavMob = document.getElementById('btn-nav-resumen-mobile');
                 if (btnNav) btnNav.style.setProperty('display', 'inline-block', 'important');
                 if (btnNavMob) btnNavMob.style.setProperty('display', 'block', 'important');
                 
-                console.log("✅ Resumen de informe cargado y procesado.");
+                console.log("✅ Resumen cargado con éxito.");
             } catch (e) {
-                console.error("❌ Error al procesar resumen:", e);
-                appState.resumenInformeData = null; // Reset por seguridad
+                console.warn("⚠️ El archivo de resumen existe pero está corrupto.");
+                appState.resumenInformeData = null;
             }
+        } else {
+            console.warn("ℹ️ No se encontró resumen_informe.json. La app funcionará sin él.");
+            appState.resumenInformeData = null;
         }
 
         // 4. Mapeo de archivos y cargas secundarias

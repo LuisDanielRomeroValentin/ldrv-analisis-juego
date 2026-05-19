@@ -2,17 +2,36 @@
 
 const resume = {
     init: () => {
-        const btnDesktop = document.getElementById('btn-nav-resumen');
-        if (btnDesktop) {
-            btnDesktop.addEventListener('click', () => {
-                ui.showSection('v-resumen');
-                const activeBtn = document.querySelector('.nav-btn.active');
-                if (activeBtn) activeBtn.classList.remove('active');
-                btnDesktop.classList.add('active');
-                
-                resume.renderizar();
-            });
-        }
+        // Añadimos el botón de móvil por si acaso
+        const botones = ['btn-nav-resumen', 'btn-nav-resumen-mobile'];
+        
+        botones.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    console.log(`🖱️ Botón ${id} clicado. Buscando datos...`);
+                    
+                    const datosActuales = appState.resumenInformeData;
+                    if (!datosActuales) {
+                        alert("Los datos del informe aún no se han procesado.");
+                        return;
+                    }
+
+                    ui.showSection('v-resumen');
+                    
+                    // Ajuste clave para iOS: forzar visibilidad del contenedor
+                    const contenedor = document.getElementById('sheet-preview-container');
+                    if (contenedor) {
+                        contenedor.style.display = 'block';
+                        contenedor.style.opacity = '1';
+                    }
+
+                    setTimeout(() => {
+                        resume.renderizar();
+                    }, 150); // Ligeramente mayor para asegurar el cambio de DOM
+                });
+            }
+        });
         console.log('%c📋 Módulo Resumen de Informe Inicializado', 'color: #22c55e; font-weight: bold;');
     },
 
@@ -33,25 +52,11 @@ const resume = {
         const contenedor = document.getElementById('sheet-preview-container');
         if (!contenedor) return;
 
-        // 🛡️ PROTECCIÓN PARA iOS: Reintento automático
-        if (!appState.resumenInformeData) {
-            console.warn("⏳ Resumen no listo aún. Reintentando en 300ms...");
-            setTimeout(resume.renderizar, 300);
-            return;
-        }
-
         const datosInforme = appState.resumenInformeData;
+        if (!datosInforme) return;
+
+        // 3. Preparación de variables de contexto
         const datosPartido = appState.partidoData || {}; 
-
-        if (!datosInforme) {
-            contenedor.innerHTML = `
-                <div class="text-center p-5 text-danger bg-white rounded border">
-                    <h5>⚠️ Archivo "resumen_informe.json" no detectado</h5>
-                    <p class="small text-muted mb-0">Por favor, asegúrate de subir una carpeta o ZIP que contenga este informe.</p>
-                </div>`;
-            return;
-        }
-
         const metaInforme = datosInforme.partido_metadata || {};
         const local = datosPartido.local || metaInforme.local || 'Barcelona';
         const visitante = datosPartido.visitante || metaInforme.visitante || 'Real Madrid';
@@ -70,6 +75,7 @@ const resume = {
 
         const horaTexto = datosPartido.hora ? ` | ${datosPartido.hora}` : ' | 21:00';
 
+        // 4. Construcción del HTML
         let html = `
         <div class="p-5 bg-white rounded shadow-sm border border-slate-100 style-dossier" style="color: #0f172a; max-width: 1100px; margin: 0 auto; font-family: 'Inter', system-ui, sans-serif;">
             <table style="width: 100%; border-collapse: collapse; background: transparent;">
@@ -110,8 +116,7 @@ const resume = {
                 <tbody>
                     <tr>
                         <td>
-                            <div class="report-body-content résumé-container">
-        `;
+                            <div class="report-body-content résumé-container">`;
 
         if (datosInforme.texto_inicial_global) {
             html += `
@@ -123,8 +128,7 @@ const resume = {
                                     <div class="p-3.5 rounded-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
                                         ${resume.formatearTexto(datosInforme.texto_inicial_global)}
                                     </div>
-                                </div>
-            `;
+                                </div>`;
         }
 
         if (datosInforme.resumen_tactico) {
@@ -133,8 +137,7 @@ const resume = {
                                     <h5 class="fw-bold mb-4 pb-1 text-dark position-relative" style="font-size: 1.1rem; letter-spacing: -0.3px;">
                                         2. Desglose Táctico por Categorías
                                         <span class="position-absolute bottom-0 start-0 bg-success rounded" style="width: 35px; height: 3px;"></span>
-                                    </h5>
-            `;
+                                    </h5>`;
 
             for (const [categoria, subcategorias] of Object.entries(datosInforme.resumen_tactico)) {
                 let sectionTheme = { border: 'border-secondary-subtle', text: 'text-secondary', bg: 'bg-secondary-subtle' };
@@ -147,8 +150,7 @@ const resume = {
                                         <div class="px-3 py-2.5 border-bottom d-flex align-items-center justify-content-between ${sectionTheme.bg}" style="border-color: rgba(0,0,0,0.05) !important;">
                                             <span class="fw-extrabold text-uppercase ${sectionTheme.text}" style="font-size: 0.8rem; letter-spacing: 1px;">${categoria}</span>
                                         </div>
-                                        <div class="p-3 bg-white">
-                `;
+                                        <div class="p-3 bg-white">`;
 
                 for (const [bloqueNombre, bloqueContenido] of Object.entries(subcategorias)) {
                     html += `
@@ -156,8 +158,7 @@ const resume = {
                                                 <div class="d-flex align-items-center gap-2 mb-2">
                                                     <span style="font-size: 0.95rem;">⚽</span>
                                                     <h6 class="fw-bold text-dark m-0" style="font-size: 0.95rem; letter-spacing: -0.2px;">${bloqueNombre}</h6>
-                                                </div>
-                    `;
+                                                </div>`;
                     if (bloqueContenido.patrones_detectados && bloqueContenido.patrones_detectados.length > 0) {
                         html += `
                                                 <div class="ms-4 mb-2">
@@ -168,15 +169,13 @@ const resume = {
                                                                 <span class="text-dark fw-medium">${p}</span>
                                                             </div>`).join('')}
                                                     </div>
-                                                </div>
-                        `;
+                                                </div>`;
                     }
                     if (bloqueContenido.anotaciones_libres) {
                         html += `
                                                 <div class="ms-4 p-2.5 rounded-2 border-start border-3" style="background-color: #fdfdfd; border-color: #cbd5e1 !important;">
                                                     ${resume.formatearTexto(bloqueContenido.anotaciones_libres)}
-                                                </div>
-                        `;
+                                                </div>`;
                     }
                     html += `</div>`;
                 }
@@ -195,8 +194,7 @@ const resume = {
                                     <div class="p-3.5 rounded-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
                                         ${resume.formatearTexto(datosInforme.texto_final_global)}
                                     </div>
-                                </div>
-            `;
+                                </div>`;
         }
 
         html += `
@@ -205,9 +203,16 @@ const resume = {
                     </tr>
                 </tbody>
             </table>
-        </div> `;
+        </div>`;
 
         contenedor.innerHTML = html;
+        
+        // FORZADO DE REPAINT (Crucial para iOS)
+        contenedor.style.display = 'none';
+        contenedor.offsetHeight; // Truco técnico para forzar al navegador a recalcular
+        contenedor.style.display = 'block';
+
+        console.log("🎉 Renderizado completado.");
     }
 };
 
