@@ -38,44 +38,42 @@ async function processZip(file) {
         appState.zipContent = zip;
         appState.sourceType = 'zip';
 
-        // 1. Búsqueda de archivos
+        // BUSQUEDA FLEXIBLE DE CONFIGURACIONES PRINCIPALES:
         const pFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "datos_partido.json");
         const cFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "datos_cortes.json");
         const vFileName = Object.keys(zip.files).find(f => {
             const name = f.split('/').pop().toLowerCase();
             return name.includes("valoracion") && name.endsWith(".json");
         });
+        
+        // NUEVO: Búsqueda elástica de resumen_informe.json
         const rFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "resumen_informe.json");
 
-        if (!pFileName || !cFileName || !vFileName) {
-            throw new Error('Faltan archivos esenciales (partido, cortes o valoraciones)');
-        }
+        if (!pFileName) throw new Error('No se encontró datos_partido.json en el ZIP');
+        if (!cFileName) throw new Error('No se encontró datos_cortes.json en el ZIP');
+        if (!vFileName) throw new Error('No se encontró valoraciones_cortes.json en el ZIP');
 
-        // 2. Carga secuencial de datos críticos
+        // Extraemos el contenido principal
         appState.partidoData      = JSON.parse(await zip.file(pFileName).async("string"));
         appState.datosCortes      = JSON.parse(await zip.file(cFileName).async("string"));
         appState.valoracionCortes = parseValoraciones(JSON.parse(await zip.file(vFileName).async("string")));
 
-        // 3. Procesamiento del resumen (asegurando sincronía)
+        // NUEVO: Procesar opcionalmente el resumen si viene en el ZIP
         if (rFileName) {
             try {
-                const rContent = await zip.file(rFileName).async("string");
-                appState.resumenInformeData = JSON.parse(rContent);
-                
-                // Mostrar botones tras confirmar carga
+                appState.resumenInformeData = JSON.parse(await zip.file(rFileName).async("string"));
+                console.log("📋 Resumen de informe cargado desde ZIP con éxito.");
+                // Mostrar botones de la interfaz
                 const btnNav = document.getElementById('btn-nav-resumen');
                 const btnNavMob = document.getElementById('btn-nav-resumen-mobile');
                 if (btnNav) btnNav.style.setProperty('display', 'inline-block', 'important');
                 if (btnNavMob) btnNavMob.style.setProperty('display', 'block', 'important');
-                
-                console.log("✅ Resumen de informe cargado y procesado.");
             } catch (e) {
-                console.error("❌ Error al procesar resumen:", e);
-                appState.resumenInformeData = null; // Reset por seguridad
+                console.error("❌ Error parseando resumen_informe.json en ZIP:", e);
             }
         }
 
-        // 4. Mapeo de archivos y cargas secundarias
+        // Mapeo plano de todos los archivos del ZIP
         appState.allFilesFlat = Object.keys(zip.files).map(path => ({
             path,
             name: path.split('/').pop(),
@@ -83,26 +81,47 @@ async function processZip(file) {
             isFile: !zip.files[path].dir
         }));
 
-        // 5. Carga de datos auxiliares (Jugadas e Impactos)
-        // Usamos Promise.all para cargar en paralelo y mejorar velocidad en iOS
-        const [jugadasPaths, impactosPaths] = [
-            Object.keys(zip.files).filter(p => p.toLowerCase().includes('dibujar_jugadas/') && p.endsWith('.json')),
-            Object.keys(zip.files).filter(p => p.toLowerCase().includes('impacto_porteria/') && p.endsWith('.json'))
-        ];
+        // 📋 CARGA DE JUGADAS TÁCTICAS DESDE ZIP
+        appState.jugadasData = [];
+        const jugadasZipPaths = Object.keys(zip.files).filter(path => {
+            const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
+            return normalizedPath.includes('dibujar_jugadas/') && normalizedPath.endsWith('.json');
+        });
 
-        appState.jugadasData = (await Promise.all(jugadasPaths.map(p => zip.file(p).async("string").then(JSON.parse)))).filter(Boolean);
-        appState.impactosPorteriaData = (await Promise.all(impactosPaths.map(p => zip.file(p).async("string").then(JSON.parse)))).filter(Boolean);
+        for (const path of jugadasZipPaths) {
+            try {
+                const contentStr = await zip.file(path).async("string");
+                appState.jugadasData.push(JSON.parse(contentStr));
+            } catch (e) {
+                console.error("❌ Error parseando jugada en ZIP:", path, e);
+            }
+        }
+        console.log(`📋 Jugadas tácticas cargadas desde ZIP: ${appState.jugadasData.length}`);
 
-        console.log(`📋 Carga completada: ${appState.jugadasData.length} jugadas, ${appState.impactosPorteriaData.length} impactos.`);
+        // 🥅 CARGA DE IMPACTOS PORTERÍA DESDE ZIP
+        appState.impactosPorteriaData = [];
+        const impactosZipPaths = Object.keys(zip.files).filter(path => {
+            const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
+            return normalizedPath.includes('impacto_porteria/') && normalizedPath.endsWith('.json');
+        });
 
+        for (const path of impactosZipPaths) {
+            try {
+                const contentStr = await zip.file(path).async("string");
+                appState.impactosPorteriaData.push(JSON.parse(contentStr));
+            } catch (e) {
+                console.error("❌ Error parseando impacto en ZIP:", path, e);
+            }
+        }
+        console.log(`🥅 Archivos de impacto cargados desde ZIP: ${appState.impactosPorteriaData.length}`);
+
+        // ── INSERCIÓN: RELLENAR SELECTOR DE TIPOS DE IMPACTOS TRAS LA CARGA ZIP ──
         poblarFiltroTiposImpactos(appState.impactosPorteriaData);
 
-        // 6. INICIALIZACIÓN FINAL: Solo cuando todo está en memoria
         ui.initApp();
-
     } catch (error) {
-        console.error('❌ Error fatal en processZip:', error);
-        showError(`Error cargando ZIP: ${error.message}`);
+        console.error('❌ Error en ZIP:', error);
+        showError(`Error: ${error.message}`);
     }
 }
 
