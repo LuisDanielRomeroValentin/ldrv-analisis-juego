@@ -565,3 +565,285 @@ body.dark-mode {
     padding: 4px 8px;
     font-size: 0.85rem;
 }
+
+/* ==========================================================================
+   ===== SECCIÓN: INFORME DINÁMICO (LDRV STYLE) — EDICIÓN PROFESIONAL =====
+   ========================================================================== */
+
+/* Bloque contenedor del Resumen */
+.resumen-container {
+    padding: 0 1rem 2rem;
+    animation: fadeInLdrv 0.35s ease;
+}
+
+@keyframes fadeInLdrv {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- GRID DE KPIS / MÉTRICAS PRINCIPALES --- */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    background: linear-gradient(145deg, #1e1e1e 0%, #161616 100%);
+    border: 1px solid rgba(77, 179, 162, 0.15);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: border-color 0.25s, transform 0.25s;
+}
+
+.kpi-card:hover {
+    border-color: var(--ldr-green);
+    transform: translateY(-2px);
+}
+
+.kpi-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+}
+
+.kpi-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--ldr-green);
+    line-height: 1.1;
+}
+
+/* --- BLOQUES DE CONTENIDO Y COMENTARIOS WEB --- */
+.report-block-card {
+    background: var(--card-bg);
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+.report-block-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    border-left: 4px solid var(--ldr-green);
+    padding-left: 10px;
+    margin-bottom: 1rem;
+    letter-spacing: 0.3px;
+}
+
+/* --- NUEVA CLASE EXCLUSIVA PARA EL DOSSIER VIRTUAL (Elimina cuadros negros) --- */
+.style-dossier .dossier-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important; /* Gris limpio, sutil y elegante */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    margin-bottom: 1.5rem;
+}
+
+/* Párrafos estilizados para el análisis táctico */
+.report-text-content {
+    font-size: 0.92rem;
+    color: #e0e0e0;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* Listas de aspectos destacados (Pros/Contras o Claves) */
+.report-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.report-list li {
+    font-size: 0.9rem;
+    color: #d5d5d5;
+    position: relative;
+    padding-left: 1.5rem;
+    line-height: 1.4;
+}
+
+.report-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0.4rem;
+    color: var(--ldr-green);
+    font-weight: bold;
+    font-size: 1.1rem;
+    top: -1px;
+}
+
+/* Ajustes de control de visibilidad forzada mediante JS si se requiere */
+#btn-nav-resumen, #btn-nav-resumen-mobile {
+    display: none; /* Se activa dinámicamente desde el app.js al detectar el JSON */
+}
+
+/* Comportamiento por defecto de la cabecera repetible en la pantalla de la app */
+.report-header-repeatable {
+    display: block;
+}
+
+
+/* ==========================================================================
+   ── REGLAS DE CONTROL DE IMPRESIÓN EXCLUSIVAS PARA EL INFORME PDF ──
+   ========================================================================== */
+
+/* Regla para la interfaz web normal: oculta el colchón de aire en la pantalla */
+@media screen {
+    .print-spacer-row {
+        display: none;
+    }
+}
+
+@media print {
+    /* 1. Ocultar la interfaz web, menús, botones y elementos de control */
+    .navbar,
+    #main-menu,
+    .mobile-nav-dropdown,
+    .hamburger-btn,
+    .status-badge-ldr,
+    .section-header-ldrv,
+    .section-header-right,
+    .custom-select-ldrv,
+    #btn-nav-resumen,
+    #btn-nav-resumen-mobile,
+    .btn-primary,
+    .close-modal,
+    button,
+    [id*="exportar"],
+    .btn-upload-zip,
+    .btn-upload-folder {
+        display: none !important;
+    }
+    
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* 2. Forzar que las dimensiones de la página del PDF respeten el estándar A4 sin textos nativos */
+    @page {
+        size: A4 portrait;
+        margin: 0; /* Al poner el margen a 0, desaparecen los textos automáticos del navegador */
+    }
+
+    body, body.dark-mode {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    /* Forzar que el lienzo contenedor asuma un formato de folio limpio sin sombras de la app */
+    .style-dossier {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 15mm 15mm 15mm 15mm !important; /* Margen de respiración real escrito en CSS */
+        max-width: 100% !important;
+        position: relative;
+        background: #ffffff !important;
+        box-sizing: border-box;
+    }
+
+    /* 3. Colchón de aire superior dinámico para que la cabecera no se pegue arriba en las hojas 2, 3, etc. */
+    .print-spacer-row {
+        display: table-row !important;
+        height: 12mm; 
+    }
+
+    /* 4. Forzar que los motores del navegador repitan el thead en cada corte físico de hoja */
+    thead { 
+        display: table-header-group !important; 
+    }
+    
+    tbody { 
+        display: table-row-group !important; 
+    }
+
+    .report-header-print-block {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    /* 5. MARCA DE AGUA EXCLUSIVA: Centrada exactamente en medio de cada página impresa */
+    .style-dossier::before {
+        content: "";
+        position: fixed; /* Esto fuerza la replicación exacta en el fondo de cada folio */
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 440px; /* Tamaño optimizado del logo circular LDRV en el papel */
+        height: 440px;
+        background-image: url('../img/logo.png'); /* Ruta de tu imagen de marca */
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        opacity: 0.03 !important; /* Ajustado al 3% para un acabado corporativo impecable y ultra legible */
+        pointer-events: none;
+        z-index: -1000;
+    }
+
+    /* 6. Evitar rupturas huérfanas de tarjetas y bloques tácticos a mitad de página */
+    .style-dossier .dossier-card {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important; /* Mantiene la separación fina gris en papel */
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-bottom: 1.5rem !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .report-section,
+    .tactical-sub-block {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    /* 7. Contraste de metadatos e información secundaria */
+    .row.g-2.mb-4.p-3.rounded {
+        background-color: #f8fafc !important; 
+        border: 1px solid #e2e8f0 !important;
+        color: #0f172a !important;
+    }
+    
+    .row.g-2.mb-4.p-3.rounded .text-dark {
+        color: #000000 !important;
+    }
+
+    .report-block-title {
+        color: #111111 !important;
+        border-left: 4px solid var(--ldr-blue) !important;
+    }
+
+    .report-text-content,
+    .report-list li {
+        color: #222222 !important;
+    }
+
+    /* 8. Formato adaptado para los cuadros de KPIs en el papel */
+    .kpi-card {
+        background: #f8f9fa !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
+    }
+
+    .kpi-title {
+        color: #64748b !important;
+    }
+
+    .kpi-value {
+        color: var(--ldr-blue) !important;
+    }
+}

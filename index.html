@@ -25,6 +25,7 @@
                 <button id="btn-nav-analizados" class="btn nav-btn">🎯 Analizados</button>
                 <button id="btn-nav-tiros" class="btn nav-btn">🥅 Impactos Portería</button>
                 <button id="btn-nav-jugadas" class="btn nav-btn">🎮 Pizarra Táctica</button>
+                <button id="btn-nav-resumen" class="btn nav-btn btn-outline-success border-dashed fw-bold">📋 Ver Resumen</button>
             </nav>
 
             <button class="hamburger-btn d-flex d-md-none ms-auto" id="hamburger-btn" style="visibility:hidden;" aria-label="Menú">
@@ -38,6 +39,7 @@
             <button id="btn-nav-analizados-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
             <button id="btn-nav-tiros-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-impactos'); ui.setActiveBtn(this); ui.closeMobileMenu()">🥅 Impactos Portería</button>
             <button id="btn-nav-jugadas-mobile" class="btn nav-btn w-100" onclick="ui.showSection('jugadas-section'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Pizarra Táctica</button>
+            <button id="btn-nav-resumen-mobile" class="btn nav-btn w-100 fw-bold text-success" onclick="ui.showSection('v-resumen'); ui.setActiveBtn(this); ui.closeMobileMenu(); if(window.resume) resume.renderizar();">📋 Ver Resumen</button>
         </div>
     </header>
 
@@ -126,15 +128,12 @@
                             <canvas id="shots-canvas" class="shadow-lg" style="max-width: 100%; height: auto; display: block; margin: 0 auto;"></canvas>
                         </div>
                     </div>
-                    
                     <div class="col-12 col-lg-3 d-flex flex-column">
                         <div class="timeline-header mb-2 d-flex justify-content-between align-items-center mt-2 mt-lg-0 px-1">
                             <h5 class="text-white m-0 small fw-bold" style="letter-spacing: 0.5px;">⏱️ CRONOLOGÍA</h5>
                             <span class="badge bg-success" id="total-impactos-badge">0</span>
                         </div>
-                        
-                        <div id="lista-cronologica-impactos" class="timeline-responsive-container" style="max-height: 480px; overflow-y: auto;">
-                            </div>
+                        <div id="lista-cronologica-impactos" class="timeline-responsive-container" style="max-height: 480px; overflow-y: auto;"></div>
                     </div>
                 </div>
             </div>
@@ -153,11 +152,9 @@
                         <option value="mapa-calor">3. Mapa de Calor (Por Cuadrícula)</option>
                         <option value="red-pases">4. Red de Pases (Por Orden de Secuencia)</option>
                     </select>
-                    
                     <select id="play-type-select" class="custom-select-ldrv" style="max-width: 160px;">
                         <option value="">Filtrar Tipo...</option>
                     </select>
-                    
                     <select id="play-file-select" class="custom-select-ldrv" style="max-width: 200px;" disabled>
                         <option value="">Selecciona una jugada...</option>
                     </select>
@@ -176,13 +173,30 @@
                 <button id="btn-play-animation" class="btn btn-success btn-sm px-4 fw-bold" disabled>▶ REPRODUCIR</button>
                 <button id="btn-pause-animation" class="btn btn-warning btn-sm text-dark px-4 fw-bold" disabled>⏸ PAUSAR</button>
                 <button id="btn-reset-animation" class="btn btn-secondary btn-sm px-4 fw-bold" disabled>🔄 REINICIAR</button>
-                
                 <select id="play-speed-select" class="custom-select-ldrv" style="max-width: 110px; border-color: var(--ldr-green);">
                     <option value="0.0125">🐢 0.25x</option>
                     <option value="0.025">⏳ 0.50x</option>
                     <option value="0.05" selected>⚡ 1.00x (Normal)</option>
                     <option value="0.1">🚀 2.00x</option>
                 </select>
+            </div>
+        </section>
+
+        <section id="v-resumen" class="app-section" style="display:none;">
+            <div class="section-header-ldrv mb-3 no-print">
+                <div class="section-header-left">
+                    <span class="section-tag" style="color: var(--ldr-green);">INFORME TÁCTICO INTEGRAL</span>
+                    <h2 class="section-title">Resumen Ejecutivo de Rendimiento</h2>
+                </div>
+                <div class="section-header-right">
+                    <button class="btn btn-success fw-bold d-flex align-items-center gap-2 px-3 shadow" onclick="window.print()">
+                        🖨️ Exportar a PDF / Imprimir
+                    </button>
+                </div>
+            </div>
+
+            <div class="print-paper shadow-lg mx-auto" id="sheet-preview-container">
+                <div class="text-center p-5 text-muted">Esperando carga del archivo resumen_informe.json...</div>
             </div>
         </section>
 
@@ -205,5 +219,6 @@
     <script src="js/ui.js"></script>
     <script src="js/plays.js"></script>
     <script src="js/shots.js"></script>
+    <script src="js/resume.js"></script>
 </body>
 </html>

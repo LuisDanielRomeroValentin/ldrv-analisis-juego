@@ -10,7 +10,8 @@ const appState = {
     valoracionCortes: null,
     tomaDatos: null,
     jugadasData: [],
-    impactosPorteriaData: [] // 🥅 Almacén oficial para los impactos de portería planos
+    impactosPorteriaData: [], // 🥅 Almacén oficial para los impactos de portería planos
+    resumenInformeData: null   // 📋 NUEVO: Almacén oficial para el JSON del informe dinámico
 };
 
 console.log('%c📱 LDRV iniciado', 'color: green; font-weight: bold; font-size: 14px');
@@ -44,6 +45,9 @@ async function processZip(file) {
             const name = f.split('/').pop().toLowerCase();
             return name.includes("valoracion") && name.endsWith(".json");
         });
+        
+        // NUEVO: Búsqueda elástica de resumen_informe.json
+        const rFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "resumen_informe.json");
 
         if (!pFileName) throw new Error('No se encontró datos_partido.json en el ZIP');
         if (!cFileName) throw new Error('No se encontró datos_cortes.json en el ZIP');
@@ -53,6 +57,21 @@ async function processZip(file) {
         appState.partidoData      = JSON.parse(await zip.file(pFileName).async("string"));
         appState.datosCortes      = JSON.parse(await zip.file(cFileName).async("string"));
         appState.valoracionCortes = parseValoraciones(JSON.parse(await zip.file(vFileName).async("string")));
+
+        // NUEVO: Procesar opcionalmente el resumen si viene en el ZIP
+        if (rFileName) {
+            try {
+                appState.resumenInformeData = JSON.parse(await zip.file(rFileName).async("string"));
+                console.log("📋 Resumen de informe cargado desde ZIP con éxito.");
+                // Mostrar botones de la interfaz
+                const btnNav = document.getElementById('btn-nav-resumen');
+                const btnNavMob = document.getElementById('btn-nav-resumen-mobile');
+                if (btnNav) btnNav.style.setProperty('display', 'inline-block', 'important');
+                if (btnNavMob) btnNavMob.style.setProperty('display', 'block', 'important');
+            } catch (e) {
+                console.error("❌ Error parseando resumen_informe.json en ZIP:", e);
+            }
+        }
 
         // Mapeo plano de todos los archivos del ZIP
         appState.allFilesFlat = Object.keys(zip.files).map(path => ({
@@ -79,7 +98,7 @@ async function processZip(file) {
         }
         console.log(`📋 Jugadas tácticas cargadas desde ZIP: ${appState.jugadasData.length}`);
 
-        // 🥅 CARGA DE IMPACTOS PORTERÍA DESDE ZIP (Añadido)
+        // 🥅 CARGA DE IMPACTOS PORTERÍA DESDE ZIP
         appState.impactosPorteriaData = [];
         const impactosZipPaths = Object.keys(zip.files).filter(path => {
             const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
@@ -116,6 +135,9 @@ async function processFolder(files) {
         const pFile = files.find(f => f.name === "datos_partido.json");
         const cFile = files.find(f => f.name === "datos_cortes.json");
         const vFile = files.find(f => f.name === "valoraciones_cortes.json");
+        
+        // NUEVO: Búsqueda flexible de resumen_informe.json local
+        const rFile = files.find(f => f.name === "resumen_informe.json");
 
         if (!pFile) throw new Error('No se encontró datos_partido.json');
         if (!cFile) throw new Error('No se encontró datos_cortes.json');
@@ -124,6 +146,21 @@ async function processFolder(files) {
         appState.partidoData  = JSON.parse(await pFile.text());
         appState.datosCortes  = JSON.parse(await cFile.text());
         appState.valoracionCortes = parseValoraciones(JSON.parse(await vFile.text()));
+
+        // NUEVO: Procesar opcionalmente el resumen en carga local
+        if (rFile) {
+            try {
+                appState.resumenInformeData = JSON.parse(await rFile.text());
+                console.log("📋 Resumen de informe cargado desde carpeta local con éxito.");
+                // Mostrar botones de la interfaz
+                const btnNav = document.getElementById('btn-nav-resumen');
+                const btnNavMob = document.getElementById('btn-nav-resumen-mobile');
+                if (btnNav) btnNav.style.setProperty('display', 'inline-block', 'important');
+                if (btnNavMob) btnNavMob.style.setProperty('display', 'block', 'important');
+            } catch (e) {
+                console.error("❌ Error parseando resumen_informe.json local:", e);
+            }
+        }
 
         appState.allFilesFlat = files.map(f => ({
             file: f,
@@ -149,7 +186,7 @@ async function processFolder(files) {
         }
         console.log(`📋 Jugadas tácticas cargadas desde carpeta: ${appState.jugadasData.length}`);
         
-        // 🥅 CARGA DE IMPACTOS PORTERÍA DESDE CARPETA LOCAL (Añadido)
+        // 🥅 CARGA DE IMPACTOS PORTERÍA DESDE CARPETA LOCAL
         appState.impactosPorteriaData = [];
         const impactosFiles = files.filter(f => {
             const normalizedPath = f.webkitRelativePath.replace(/\\/g, '/').toLowerCase();
@@ -326,7 +363,6 @@ function poblarFiltroTiposImpactos(datosImpactos) {
 
     const tiposUnicos = new Set();
     datosImpactos.forEach(item => {
-        // Soporte elástico por si tus llaves JSON vienen como 'tipo_jugada' o 'tipo'
         const tipo = item.tipo_jugada || item.tipo;
         if (tipo) tiposUnicos.add(tipo.trim());
     });
