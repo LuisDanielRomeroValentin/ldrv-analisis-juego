@@ -151,6 +151,8 @@
                         <option value="secuencial-acumulado">2. Playlist Histórica Acumulada</option>
                         <option value="mapa-calor">3. Mapa de Calor (Por Cuadrícula)</option>
                         <option value="red-pases">4. Red de Pases (Por Orden de Secuencia)</option>
+                        <option value="mapa-cuadrantes">5. Matriz Cuadrantes (6x4 Cuantitativa)</option>
+                        <option value="inicio-fin">6. Secuencia: Inicio ➔ Fin</option>
                     </select>
                     <select id="play-type-select" class="custom-select-ldrv" style="max-width: 160px;">
                         <option value="">Filtrar Tipo...</option>
@@ -158,6 +160,13 @@
                     <select id="play-file-select" class="custom-select-ldrv" style="max-width: 200px;" disabled>
                         <option value="">Selecciona una jugada...</option>
                     </select>
+                    <div id="wrapper-sub-visualizacion" style="display: none;">
+                        <select id="sub-visualizacion-select" class="custom-select-ldrv" style="border-color: #ccff00; max-width: 180px;">
+                            <option value="vectores" selected>➼ Vectores de Progresión</option>
+                            <option value="puntos">● Puntos Duales (Origen/Fin)</option>
+                            <option value="transicion">▤ Matriz de Transición</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -220,5 +229,6 @@
     <script src="js/plays.js"></script>
     <script src="js/shots.js"></script>
     <script src="js/resume.js"></script>
+    <script src="js/plays.renderers.js"></script>
 </body>
 </html>

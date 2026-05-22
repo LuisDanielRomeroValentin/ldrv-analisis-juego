@@ -5,7 +5,7 @@ const plays = {
     ctx: null,
     animationId: null,
     
-    listaFiltrada: [],       
+    listaFiltrada: [],      
     currentIndexInList: -1,  
     
     currentPlay: null,
@@ -52,6 +52,7 @@ const plays = {
         const selectFile = document.getElementById('play-file-select');
         const selectMode = document.getElementById('play-mode-select');
         const selectSpeed = document.getElementById('play-speed-select');
+        const subVisualizacionSelect = document.getElementById('sub-visualizacion-select');
 
         if (btnPlay) btnPlay.onclick = plays.startAnimacion;
         if (btnPause) btnPause.onclick = plays.stopAnimacion;
@@ -63,20 +64,21 @@ const plays = {
             };
         }
 
-        // 🔄 SOLUCIÓN RECTIFICADA: Forzar el repintado leyendo el estado real del DOM
+        if (subVisualizacionSelect) {
+            subVisualizacionSelect.onchange = () => {
+                plays.dibujarFrame();
+            };
+        }
+
         if (selectType) {
             selectType.onchange = (e) => {
-                // Detener cualquier animación en curso para evitar colisiones de hilos de renderizado
                 plays.stopAnimacion(); 
-                
                 plays.historialJugadasPasadas = [];
                 plays.filtrarYOrdenarJugadas(e.target.value);
                 
-                // Extraemos el modo real directo del componente visual para evitar depender de 'modoActivo'
                 const modoActual = selectMode ? selectMode.value : 'individual';
                 
-                // Si está en cualquiera de los modos acumulativos/estáticos, redibujamos en el acto
-                if (modoActual === 'mapa-calor' || modoActual === 'red-pases' || modoActual === 'secuencial-acumulado') {
+                if (modoActual === 'mapa-calor' || modoActual === 'red-pases' || modoActual === 'mapa-cuadrantes' || modoActual === 'inicio-fin') {
                     plays.dibujarFrame();
                 }
             };
@@ -89,11 +91,21 @@ const plays = {
                 
                 const modo = e.target.value;
                 
-                // 👁️ CONTROL DE VISIBILIDAD DE REPRODUCCIÓN
-                if (modo === 'mapa-calor' || modo === 'red-pases') {
-                    plays.toggleControlesReproduccion(false); // Ocultar controles de tiempo
+                // 🔒 CONTROL RIGUROSO DE VISIBILIDAD USANDO EL WRAPPER REAL DEL HTML
+                const wrapperSub = document.getElementById('wrapper-sub-visualizacion');
+                if (wrapperSub) {
+                    if (modo === 'inicio-fin') {
+                        wrapperSub.style.setProperty('display', 'block', 'important');
+                    } else {
+                        wrapperSub.style.setProperty('display', 'none', 'important');
+                    }
+                }
+
+                // Control de ocultación de reproducción en barra inferior
+                if (modo === 'mapa-calor' || modo === 'red-pases' || modo === 'mapa-cuadrantes' || modo === 'inicio-fin') {
+                    plays.toggleControlesReproduccion(false);
                 } else {
-                    plays.toggleControlesReproduccion(true);  // Mostrar en 'individual' y 'secuencial-acumulado'
+                    plays.toggleControlesReproduccion(true);  
                 }
                 
                 if (modo === 'individual') {
@@ -163,7 +175,6 @@ const plays = {
             selectType.appendChild(opt);
         });
 
-        // Carga inicial del filtro por defecto del selector
         plays.filtrarYOrdenarJugadas(selectType.value || "");
     },
 
@@ -247,19 +258,11 @@ const plays = {
     },
 
     toggleControlesReproduccion: (visible) => {
-        // Si tienes un contenedor global para la botonera y el selector de velocidad:
         const contenedor = document.getElementById('playback-controls-container');
-        
         if (contenedor) {
-            contenedor.style.display = visible ? 'flex' : 'none'; // o 'block' según tu CSS
+            contenedor.style.display = visible ? 'flex' : 'none'; 
         } else {
-            // Si no hay contenedor, los ocultamos/mostramos uno a uno por ID
-            const elementos = [
-                'btn-play-animation', 
-                'btn-pause-animation', 
-                'btn-reset-animation', 
-                'play-speed-select'
-            ];
+            const elementos = ['btn-play-animation', 'btn-pause-animation', 'btn-reset-animation', 'play-speed-select'];
             elementos.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = visible ? 'inline-block' : 'none';
@@ -270,7 +273,8 @@ const plays = {
     startAnimacion: () => {
         const modoSelect = document.getElementById('play-mode-select');
         const modo = modoSelect ? modoSelect.value : 'individual';
-        if (modo === 'mapa-calor' || modo === 'red-pases') return;
+        
+        if (modo === 'mapa-calor' || modo === 'red-pases' || modo === 'mapa-cuadrantes' || modo === 'inicio-fin') return;
 
         if (modo === 'secuencial-acumulado' && plays.currentIndexInList === -1) {
             plays.currentIndexInList = 0;
@@ -351,11 +355,37 @@ const plays = {
         const modoSelect = document.getElementById('play-mode-select');
         const modo = modoSelect ? modoSelect.value : 'individual';
 
+        // 🛡️ SALVAGUARDA REACTIVA USANDO EL WRAPPER REAL
+        const wrapperSub = document.getElementById('wrapper-sub-visualizacion');
+        if (wrapperSub) {
+            if (modo === 'inicio-fin') {
+                wrapperSub.style.setProperty('display', 'block', 'important');
+            } else {
+                wrapperSub.style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        const renderParams = {
+            w: plays.modelWidth,
+            h: plays.modelHeight,
+            p: plays.padding,
+            actualizarBanner: plays.actualizarBannerInfo,
+            dibujarCampo: plays.dibujarCampo
+        };
+
         if (modo === 'mapa-calor') {
-            plays.renderizarMapaCalorCuadrícula();
+            playsRenderers.renderizarMapaCalorCuadrícula(plays.ctx, plays.listaFiltrada, renderParams, plays.getXYReal);
+            return;
+        }
+        if (modo === 'mapa-cuadrantes') {
+            playsRenderers.renderizarMapaCuadrantes(plays.ctx, plays.listaFiltrada, renderParams);
             return;
         }
         if (modo === 'red-pases') {
+            plays.renderizarRedPasesSecuencial();
+            return;
+        }
+        if (modo === 'inicio-fin') {
             plays.renderizarRedPasesSecuencial();
             return;
         }
@@ -447,183 +477,78 @@ const plays = {
         ctx.globalAlpha = 1.0;
     },
 
-    // 🎯 MOTOR TÉRMICO DE ALTA DEFINICIÓN: Escala Puro Fuego (Sin amarillos ni quemados blancos)
-    renderizarMapaCalorCuadrícula: () => {
-        plays.dibujarCampo(); 
-        const ctx = plays.ctx;
-        const w = plays.modelWidth;
-        const h = plays.modelHeight;
-        const p = plays.padding;
-        
-        const tipoSelect = document.getElementById('play-type-select');
-        const nombreFiltro = tipoSelect && tipoSelect.value ? tipoSelect.value.replace(/_/g, ' ').toUpperCase() : 'TODOS';
-
-        if (plays.listaFiltrada.length === 0) {
-            plays.actualizarBannerInfo(`📊 NO HAY CLIPS PARA EL MAPA DE CALOR DE: ${nombreFiltro}`);
-            return;
-        }
-
-        const tamañoResolucion = 15; 
-        const matrizDensidad = {};
-        const listaPuntosA_Pintar = [];
-
-        const xMinCampo = p;
-        const xMaxCampo = w - p;
-        const yMinCampo = p;
-        const yMaxCampo = h - p;
-        const iW = w - (p * 2);
-        const iH = h - (p * 2);
-
-        ctx.save();
-        ctx.fillStyle = 'rgba(0, 10, 5, 0.15)';
-        ctx.fillRect(xMinCampo, yMinCampo, iW, iH);
-        ctx.restore();
-
-        plays.listaFiltrada.forEach(jugada => {
-            if (!jugada.acciones) return;
-            jugada.acciones.forEach(acc => {
-                const pIni = plays.getXYReal(acc.inicio.x, acc.inicio.y);
-                const pFin = plays.getXYReal(acc.final.x, acc.final.y);
-
-                const dx = pFin.x - pIni.x;
-                const dy = pFin.y - pIni.y;
-                const distancia = Math.sqrt(dx * dx + dy * dy);
-
-                const pasos = Math.max(Math.floor(distancia / 4), 1);
-
-                for (let i = 0; i <= pasos; i++) {
-                    const t = i / pasos;
-                    const interX = pIni.x + dx * t;
-                    const interY = pIni.y + dy * t;
-
-                    if (interX >= xMinCampo && interX <= xMaxCampo && interY >= yMinCampo && interY <= yMaxCampo) {
-                        listaPuntosA_Pintar.push({ x: interX, y: interY });
-
-                        const col = Math.floor(interX / tamañoResolucion);
-                        const fila = Math.floor(interY / tamañoResolucion);
-                        const clave = `${col}_${fila}`;
-                        matrizDensidad[clave] = (matrizDensidad[clave] || 0) + 1;
-                    }
-                }
-            });
-        });
-
-        const frecuencias = Object.values(matrizDensidad);
-        const maxFrecuencia = frecuencias.length > 0 ? Math.max(...frecuencias) : 1;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(xMinCampo, yMinCampo, iW, iH);
-        ctx.clip();
-
-        ctx.globalCompositeOperation = 'screen';
-        const radioInfluencia = 45; 
-
-        listaPuntosA_Pintar.forEach(punto => {
-            const col = Math.floor(punto.x / tamañoResolucion);
-            const fila = Math.floor(punto.y / tamañoResolucion);
-            const clave = `${col}_${fila}`;
-            
-            const pesoZona = matrizDensidad[clave] || 1;
-            const ratio = pesoZona / maxFrecuencia;
-
-            const grad = ctx.createRadialGradient(punto.x, punto.y, 0, punto.x, punto.y, radioInfluencia);
-
-            // Ajuste estricto de tonos para evitar el efecto "lavado/blanco" de la imagen
-            if (ratio < 0.35) {
-                // ZONA BAJA: Naranja melocotón sutil pero con color real para que no parezca blanco
-                grad.addColorStop(0, 'rgba(234, 112, 36, 0.22)');
-                grad.addColorStop(0.6, 'rgba(234, 112, 36, 0.04)');
-                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            } else if (ratio < 0.75) {
-                // ZONA MEDIA: Naranja fuerte corporativo y vivo
-                grad.addColorStop(0, 'rgba(249, 70, 4, 0.50)');
-                grad.addColorStop(0.5, 'rgba(234, 112, 36, 0.15)');
-                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            } else {
-                // ZONA MÁXIMA: Rojo carmín intenso (sin núcleo blanco) para mantener la identidad del color
-                grad.addColorStop(0, 'rgba(200, 10, 10, 0.90)'); 
-                grad.addColorStop(0.4, 'rgba(249, 70, 4, 0.35)');  
-                grad.addColorStop(0.8, 'rgba(234, 112, 36, 0.05)');  
-                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            }
-
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(punto.x, punto.y, radioInfluencia, 0, Math.PI * 2);
-            ctx.fill();
-        });
-
-        ctx.restore(); 
-
-        // 4. MAQUILLAJE REGLAMENTARIO
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)'; 
-        ctx.lineWidth = 1.8; 
-        ctx.setLineDash([]); 
-        
-        ctx.strokeRect(p, p, iW, iH);
-        ctx.beginPath();
-        ctx.moveTo(w / 2, p);
-        ctx.lineTo(w / 2, h - p);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(w / 2, h / 2, 75, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(w / 2, h / 2, 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.fill();
-
-        ctx.strokeRect(p, h / 2 - 130, 120, 260); 
-        ctx.strokeRect(p, h / 2 - 55, 40, 110);   
-        ctx.beginPath();
-        ctx.arc(p + 90, h / 2, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(p + 90, h / 2, 60, -Math.PI / 2.8, Math.PI / 2.8);
-        ctx.stroke();
-
-        ctx.strokeRect(w - p - 120, h / 2 - 130, 120, 260); 
-        ctx.strokeRect(w - p - 40, h / 2 - 55, 40, 110);    
-        ctx.beginPath();
-        ctx.arc(w - p - 90, h / 2, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(w - p - 90, h / 2, 60, Math.PI - Math.PI / 2.8, Math.PI + Math.PI / 2.8);
-        ctx.stroke();
-
-        ctx.restore();
-
-        plays.actualizarBannerInfo(`📊 MAPA DE CALOR PRO — FILTRO: <span class="text-white">${nombreFiltro}</span> | CLIPS COMPILADOS: ${plays.listaFiltrada.length}`);
-    },
-    
     renderizarRedPasesSecuencial: () => {
         plays.dibujarCampo();
         
+        const modoSelect = document.getElementById('play-mode-select');
+        const modo = modoSelect ? modoSelect.value : '';
+        
+        // 🟢 CAPTURAMOS EL SELECT CORRECTO DESDE EL DOM ACTUAL
+        const subVisualizacionSelect = document.getElementById('sub-visualizacion-select');
+        const subVista = subVisualizacionSelect ? subVisualizacionSelect.value : 'vectores'; 
+        
         const tipoSelect = document.getElementById('play-type-select');
         const nombreFiltro = tipoSelect && tipoSelect.value ? tipoSelect.value.replace(/_/g, ' ').toUpperCase() : 'TODOS';
 
-        // Si el nuevo filtro no tiene jugadas, avisamos en el banner y salimos limpia la pantalla
         if (plays.listaFiltrada.length === 0) {
             plays.actualizarBannerInfo(`📊 NO HAY PASES DISPONIBLES PARA EL FILTRO: ${nombreFiltro}`);
             return;
         }
 
         plays.listaFiltrada.forEach((jugada, idxClip) => {
-            if (!jugada.acciones) return;
+            if (!jugada.acciones || jugada.acciones.length === 0) return;
             const colorDelClip = plays.getColorPorClip(idxClip);
 
-            jugada.acciones.forEach((acc, idxAccion) => {
-                plays.dibujarCaminoAccion(acc, colorDelClip, 2.5, false);
-                
-                const pIni = plays.getXYReal(acc.inicio.x, acc.inicio.y);
-                plays.dibujarEntidad(pIni.x, pIni.y, colorDelClip, `${idxAccion + 1}`, 9);
-            });
+            if (modo === 'inicio-fin') {
+                const primeraAccion = jugada.acciones[0];
+                const ultimaAccion = jugada.acciones[jugada.acciones.length - 1];
+
+                const vectorGlobal = {
+                    inicio: { x: primeraAccion.inicio.x, y: primeraAccion.inicio.y },
+                    final: { x: ultimaAccion.final.x, y: ultimaAccion.final.y },
+                    tipo: 'pase'
+                };
+
+                // 🛠️ MAPEADO DE OPCIONES REALES DEL FORMULARIO
+                if (subVista === 'vectores') {
+                    // Opción 1: Vectores de Progresión (Líneas completas)
+                    plays.dibujarCaminoAccion(vectorGlobal, colorDelClip, 2.5, false);
+                    const pIni = plays.getXYReal(vectorGlobal.inicio.x, vectorGlobal.inicio.y);
+                    plays.dibujarEntidad(pIni.x, pIni.y, colorDelClip, `${idxClip + 1}`, 9);
+                    
+                    const pFin = plays.getXYReal(vectorGlobal.final.x, vectorGlobal.final.y);
+                    plays.dibujarEntidad(pFin.x, pFin.y, '#ffffff', '', 3.5, colorDelClip);
+                } 
+                else if (subVista === 'puntos') {
+                    // Opción 2: Puntos Duales (Dibujar origen y destino sin la línea en medio)
+                    const pIni = plays.getXYReal(vectorGlobal.inicio.x, vectorGlobal.inicio.y);
+                    const pFin = plays.getXYReal(vectorGlobal.final.x, vectorGlobal.final.y);
+                    plays.dibujarEntidad(pIni.x, pIni.y, colorDelClip, `O${idxClip + 1}`, 10);
+                    plays.dibujarEntidad(pFin.x, pFin.y, '#ffffff', `F${idxClip + 1}`, 10, colorDelClip);
+                } 
+                else if (subVista === 'transicion') {
+                    // Opción 3: Matriz de Transición (Muestra vector traslúcido para no sobrecargar el mapa)
+                    plays.dibujarCaminoAccion(vectorGlobal, colorDelClip, 1.5, true);
+                    const pFin = plays.getXYReal(vectorGlobal.final.x, vectorGlobal.final.y);
+                    plays.dibujarEntidad(pFin.x, pFin.y, colorDelClip, `${idxClip + 1}`, 9);
+                }
+            } else {
+                // Mantiene el modo 'red-pases' intacto (secuencia completa por clip)
+                jugada.acciones.forEach((acc, idxAccion) => {
+                    plays.dibujarCaminoAccion(acc, colorDelClip, 2.5, false);
+                    const pIni = plays.getXYReal(acc.inicio.x, acc.inicio.y);
+                    plays.dibujarEntidad(pIni.x, pIni.y, colorDelClip, `${idxAccion + 1}`, 9);
+                });
+            }
         });
 
-        plays.actualizarBannerInfo(`⛓️ RED DE PASES COMPUESTA — FILTRO: <span class="text-white">${nombreFiltro}</span> | CLIPS: ${plays.listaFiltrada.length}`);
+        // Banner informativo adaptado
+        if (modo === 'inicio-fin') {
+            const txtSub = subVista === 'vectores' ? 'VECTORES PROGRESIÓN' : (subVista === 'puntos' ? 'PUNTOS DUALES' : 'MATRIZ DE TRANSICIÓN');
+            plays.actualizarBannerInfo(`🎯 RED INICIO-FIN (${txtSub}) — FILTRO: <span class="text-white">${nombreFiltro}</span> | CLIPS: ${plays.listaFiltrada.length}`);
+        } else {
+            plays.actualizarBannerInfo(`⛓️ RED DE PASES COMPUESTA — FILTRO: <span class="text-white">${nombreFiltro}</span> | CLIPS: ${plays.listaFiltrada.length}`);
+        }
     },
 
     dibujarEntidad: (x, y, color, texto, radio, colorBorde = '#ffffff') => {
@@ -700,5 +625,3 @@ const plays = {
         ctx.stroke();
     }
 };
-
-console.log('%c✅ Motor Térmico corregido: Delimitado estricto al área de juego y refresco reactivo por tipo.', 'color: #ea580c; font-weight: bold;');
