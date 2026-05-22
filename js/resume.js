@@ -139,48 +139,85 @@ const resume = {
                                         <span class="position-absolute bottom-0 start-0 bg-success rounded" style="width: 35px; height: 3px;"></span>
                                     </h5>`;
 
-            for (const [categoria, subcategorias] of Object.entries(datosInforme.resumen_tactico)) {
-                let sectionTheme = { border: 'border-secondary-subtle', text: 'text-secondary', bg: 'bg-secondary-subtle' };
-                if (categoria.toLowerCase().includes('fortaleza')) sectionTheme = { border: 'border-success-subtle', text: 'text-success', bg: 'bg-success-subtle' };
-                else if (categoria.toLowerCase().includes('debilidad')) sectionTheme = { border: 'border-danger-subtle', text: 'text-danger', bg: 'bg-danger-subtle' };
-                else if (categoria.toLowerCase().includes('general') || categoria.toLowerCase().includes('aspectos')) sectionTheme = { border: 'border-primary-subtle', text: 'text-primary', bg: 'bg-primary-subtle' };
+            // FUNCIÓN RECURSIVA PARA N-NIVELES
+            const procesarNivelTactico = (objeto, profundidad = 1) => {
+                let subHtml = '';
 
-                html += `
+                // Condición de parada: ¿Es el nodo final con los datos del análisis?
+                if (objeto && (objeto.hasOwnProperty('patrones_detectados') || objeto.hasOwnProperty('anotaciones_libres'))) {
+                    const tienePatrones = objeto.patrones_detectados && objeto.patrones_detectados.length > 0;
+                    const tieneAnotaciones = objeto.anotaciones_libres && objeto.anotaciones_libres.trim() !== "";
+
+                    if (tienePatrones) {
+                        subHtml += `
+                                        <div class="ms-4 mb-2">
+                                            <div class="d-flex flex-column gap-1.5">
+                                                ${objeto.patrones_detectados.map(p => `
+                                                    <div class="d-flex align-items-start py-1.5 px-3 rounded-2 border" style="background-color: #fafafa; border-color: #f1f5f9 !important; font-size: 0.88rem;">
+                                                        <span class="me-2 text-muted fw-bold" style="color: #94a3b8 !important;">•</span>
+                                                        <span class="text-dark fw-medium">${p}</span>
+                                                    </div>`).join('')}
+                                            </div>
+                                        </div>`;
+                    }
+                    if (tieneAnotaciones) {
+                        subHtml += `
+                                        <div class="ms-4 p-2.5 rounded-2 border-start border-3" style="background-color: #fdfdfd; border-color: #cbd5e1 !important;">
+                                            ${resume.formatearTexto(objeto.anotaciones_libres)}
+                                        </div>`;
+                    }
+                    return subHtml;
+                }
+
+                // Si no es el nodo final, seguimos bajando por las ramas del árbol JSON
+                for (const [clave, valor] of Object.entries(objeto)) {
+                    if (profundidad === 1) {
+                        // Nivel Raíz (Fortalezas / Debilidades) -> Estilo Tarjeta Grande
+                        let sectionTheme = { border: 'border-secondary-subtle', text: 'text-secondary', bg: 'bg-secondary-subtle' };
+                        if (clave.toLowerCase().includes('fortaleza')) sectionTheme = { border: 'border-success-subtle', text: 'text-success', bg: 'bg-success-subtle' };
+                        else if (clave.toLowerCase().includes('debilidad')) sectionTheme = { border: 'border-danger-subtle', text: 'text-danger', bg: 'bg-danger-subtle' };
+                        else if (clave.toLowerCase().includes('general') || clave.toLowerCase().includes('aspectos')) sectionTheme = { border: 'border-primary-subtle', text: 'text-primary', bg: 'bg-primary-subtle' };
+
+                        subHtml += `
                                     <div class="mb-4 rounded-3 overflow-hidden dossier-card">
                                         <div class="px-3 py-2.5 border-bottom d-flex align-items-center justify-content-between ${sectionTheme.bg}" style="border-color: rgba(0,0,0,0.05) !important;">
-                                            <span class="fw-extrabold text-uppercase ${sectionTheme.text}" style="font-size: 0.8rem; letter-spacing: 1px;">${categoria}</span>
+                                            <span class="fw-extrabold text-uppercase ${sectionTheme.text}" style="font-size: 0.8rem; letter-spacing: 1px;">${clave}</span>
                                         </div>
-                                        <div class="p-3 bg-white">`;
-
-                for (const [bloqueNombre, bloqueContenido] of Object.entries(subcategorias)) {
-                    html += `
-                                            <div class="mb-4 last-mb-0 tactical-sub-block">
-                                                <div class="d-flex align-items-center gap-2 mb-2">
-                                                    <span style="font-size: 0.95rem;">⚽</span>
-                                                    <h6 class="fw-bold text-dark m-0" style="font-size: 0.95rem; letter-spacing: -0.2px;">${bloqueNombre}</h6>
-                                                </div>`;
-                    if (bloqueContenido.patrones_detectados && bloqueContenido.patrones_detectados.length > 0) {
-                        html += `
-                                                <div class="ms-4 mb-2">
-                                                    <div class="d-flex flex-column gap-1.5">
-                                                        ${bloqueContenido.patrones_detectados.map(p => `
-                                                            <div class="d-flex align-items-start py-1.5 px-3 rounded-2 border" style="background-color: #fafafa; border-color: #f1f5f9 !important; font-size: 0.88rem;">
-                                                                <span class="me-2 text-muted fw-bold" style="color: #94a3b8 !important;">•</span>
-                                                                <span class="text-dark fw-medium">${p}</span>
-                                                            </div>`).join('')}
-                                                    </div>
-                                                </div>`;
+                                        <div class="p-3 bg-white">
+                                            ${procesarNivelTactico(valor, profundidad + 1)}
+                                        </div>
+                                    </div>`;
+                    } else if (profundidad === 2) {
+                        // Segundo nivel (Fase Ofensiva / Defensiva...) -> Subtítulo elegante
+                        subHtml += `
+                                    <div class="mb-3.5 report-subphase-block">
+                                        <h6 class="fw-bold text-dark border-bottom pb-1 mb-2.5" style="font-size: 0.95rem; color: #1e293b !important; letter-spacing: -0.2px;">
+                                            🛡️ ${clave}
+                                        </h6>
+                                        ${procesarNivelTactico(valor, profundidad + 1)}
+                                    </div>`;
+                    } else {
+                        // Para cualquier nivel intermedio extra (Nivel 3, 4, 5... N)
+                        // Calculamos un margen dinámico a la izquierda según la profundidad para jerarquizar visualmente
+                        const marginCalculado = Math.min(20 + (profundidad - 3) * 12, 50);
+                        
+                        subHtml += `
+                                    <div class="mb-3" style="margin-left: ${marginCalculado}px;">
+                                        <div class="d-flex align-items-center gap-1.5 mb-2">
+                                            <span class="badge bg-light text-slate-600 border border-slate-200" style="font-size: 0.74rem; font-weight: 600; color: #475569; background-color: #f8fafc; padding: 3px 8px;">
+                                                ${clave}
+                                            </span>
+                                        </div>
+                                        ${procesarNivelTactico(valor, profundidad + 1)}
+                                    </div>`;
                     }
-                    if (bloqueContenido.anotaciones_libres) {
-                        html += `
-                                                <div class="ms-4 p-2.5 rounded-2 border-start border-3" style="background-color: #fdfdfd; border-color: #cbd5e1 !important;">
-                                                    ${resume.formatearTexto(bloqueContenido.anotaciones_libres)}
-                                                </div>`;
-                    }
-                    html += `</div>`;
                 }
-                html += `</div></div>`;
-            }
+
+                return subHtml;
+            };
+
+            // Ejecutamos la función recursiva pasándole el objeto inicial
+            html += procesarNivelTactico(datosInforme.resumen_tactico);
             html += `</div>`;
         }
 
