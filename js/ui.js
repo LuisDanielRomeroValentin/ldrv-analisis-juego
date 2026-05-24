@@ -396,24 +396,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 ui.showSection('v-analizados');
             } else if (btnId === 'btn-nav-jugadas') {
                 ui.showSection('jugadas-section');
-                // Al entrar de primeras, recalculamos el tamaño y repintamos el lienzo
                 if (typeof plays !== 'undefined') {
                     plays.init();
                     plays.cargarTiposDisponibles();
                 }
             } else if (btnId === 'btn-nav-tiros') { 
-                // 🛠️ CORRECCIÓN AQUÍ: Apuntar al ID real de tu sección HTML ('v-impactos')
-                ui.showSection('v-impactos');
-                
-                // 🛠️ Al hacer visible la sección en el DOM, forzamos recálculo de dimensiones y pintado reactivo
+                ui.showSection('v-impactos');               
                 if (typeof shots !== 'undefined') {
                     shots.init();
                     shots.dibujar();
                 }
-
-                // 🥅 NUEVO: Renderizar la barra cronológica de tiros al entrar a la sección
                 if (appState.impactosPorteriaData) {
                     ui.poblarListaCronologica(appState.impactosPorteriaData);
+                }
+            }
+            else if (btnId === 'btn-nav-stats') {
+                ui.showSection('stats');
+                if (typeof stats !== 'undefined') {
+                    stats.renderizarEstadisticas();
                 }
             }
         });

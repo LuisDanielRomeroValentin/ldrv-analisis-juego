@@ -8,10 +8,10 @@ const appState = {
     partidoData: null,
     datosCortes: null,
     valoracionCortes: null,
-    tomaDatos: null,
     jugadasData: [],
-    impactosPorteriaData: [], // 🥅 Almacén oficial para los impactos de portería planos
-    resumenInformeData: null   // 📋 NUEVO: Almacén oficial para el JSON del informe dinámico
+    impactosPorteriaData: [],
+    tomaDatos: [],
+    resumenInformeData: null
 };
 
 console.log('%c📱 LDRV iniciado', 'color: green; font-weight: bold; font-size: 14px');
@@ -87,13 +87,15 @@ async function processZip(file) {
 
         // 5. Carga de datos auxiliares (Jugadas e Impactos)
         // Usamos Promise.all para cargar en paralelo y mejorar velocidad en iOS
-        const [jugadasPaths, impactosPaths] = [
+        const [jugadasPaths, impactosPaths, tomaDatosPaths] = [
             Object.keys(zip.files).filter(p => p.toLowerCase().includes('dibujar_jugadas/') && p.endsWith('.json')),
-            Object.keys(zip.files).filter(p => p.toLowerCase().includes('impacto_porteria/') && p.endsWith('.json'))
+            Object.keys(zip.files).filter(p => p.toLowerCase().includes('impacto_porteria/') && p.endsWith('.json')),
+            Object.keys(zip.files).filter(p => p.toLowerCase().includes('toma_datos/') && p.endsWith('.json'))
         ];
 
         appState.jugadasData = (await Promise.all(jugadasPaths.map(p => zip.file(p).async("string").then(JSON.parse)))).filter(Boolean);
         appState.impactosPorteriaData = (await Promise.all(impactosPaths.map(p => zip.file(p).async("string").then(JSON.parse)))).filter(Boolean);
+        appState.tomaDatos = (await Promise.all(tomaDatosPaths.map(p => zip.file(p).async("string").then(JSON.parse)))).filter(Boolean);
 
         console.log(`📋 Carga completada: ${appState.jugadasData.length} jugadas, ${appState.impactosPorteriaData.length} impactos.`);
 
@@ -195,6 +197,23 @@ async function processFolder(files) {
 
         // ── INSERCIÓN: RELLENAR SELECTOR DE TIPOS DE IMPACTOS TRAS LA CARGA LOCAL ──
         poblarFiltroTiposImpactos(appState.impactosPorteriaData);
+
+        // 📋 CARGA DE TOMA DE DATOS DESDE CARPETA LOCAL
+        appState.tomaDatos = [];
+        const tomaDatosFiles = files.filter(f => {
+            const normalizedPath = f.webkitRelativePath.replace(/\\/g, '/').toLowerCase();
+            return normalizedPath.includes('toma_datos/') && f.name.endsWith('.json');
+        });
+
+        for (const file of tomaDatosFiles) {
+            try {
+                const jsonContent = JSON.parse(await file.text());
+                appState.tomaDatos.push(jsonContent);
+            } catch (e) {
+                console.error("❌ Error parseando toma_datos local:", file.name, e);
+            }
+        }
+        console.log(`📋 Toma de datos cargada desde carpeta: ${appState.tomaDatos.length}`);
 
         ui.initApp();
     } catch (error) {

@@ -25,6 +25,7 @@
                 <button id="btn-nav-analizados" class="btn nav-btn">🎯 Analizados</button>
                 <button id="btn-nav-tiros" class="btn nav-btn">🥅 Impactos Portería</button>
                 <button id="btn-nav-jugadas" class="btn nav-btn">🎮 Pizarra Táctica</button>
+                <button id="btn-nav-stats" class="btn nav-btn">📈 Estadísticas</button>
                 <button id="btn-nav-resumen" class="btn nav-btn btn-outline-success border-dashed fw-bold">📋 Ver Resumen</button>
             </nav>
 
@@ -39,6 +40,7 @@
             <button id="btn-nav-analizados-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
             <button id="btn-nav-tiros-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-impactos'); ui.setActiveBtn(this); ui.closeMobileMenu()">🥅 Impactos Portería</button>
             <button id="btn-nav-jugadas-mobile" class="btn nav-btn w-100" onclick="ui.showSection('jugadas-section'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Pizarra Táctica</button>
+            <button id="btn-nav-stats-mobile" class="btn nav-btn w-100" onclick="ui.showSection('stats'); ui.setActiveBtn(this); ui.closeMobileMenu()">📈 Estadísticas</button>
             <button id="btn-nav-resumen-mobile" class="btn nav-btn w-100 fw-bold text-success" onclick="ui.showSection('v-resumen'); ui.setActiveBtn(this); ui.closeMobileMenu(); if(window.resume) resume.renderizar();">📋 Ver Resumen</button>
         </div>
     </header>
@@ -210,7 +212,6 @@
         </section>
 
         <section id="stats" class="app-section" style="display:none;">
-            <h2>📊 Informe de Rendimiento</h2>
             <div id="stats-content" class="stats-grid"></div>
         </section>
 
@@ -230,5 +231,6 @@
     <script src="js/shots.js"></script>
     <script src="js/resume.js"></script>
     <script src="js/plays.renderers.js"></script>
+    <script src="js/stats.js"></script> 
 </body>
 </html>

@@ -847,3 +847,21 @@ body.dark-mode {
         color: var(--ldr-blue) !important;
     }
 }
+
+
+/* Oculta el bloque de cabecera en pantalla */
+.dossier-header-print {
+    display: none;
+}
+
+/* Cuando el usuario abre el diálogo de impresión, se activa esto */
+@media print {
+    /* Mostramos la cabecera */
+    .dossier-header-print {
+        display: block !important;
+    }
+    /* Ocultamos elementos innecesarios al imprimir (como los botones) */
+    .no-print {
+        display: none !important;
+    }
+}
