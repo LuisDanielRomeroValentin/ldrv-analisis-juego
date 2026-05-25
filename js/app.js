@@ -16,6 +16,19 @@ const appState = {
 
 console.log('%c📱 LDRV iniciado', 'color: green; font-weight: bold; font-size: 14px');
 
+// === HELPER PARA NORMALIZAR RUTAS (COMPATIBLE MAC/SAFARI) ===
+const normalizePath = (path) => {
+    if (!path) return '';
+    return path
+        .replace(/\\/g, '/')           // Windows backslash → forward slash
+        .toLowerCase()                   // Minúsculas
+        .trim();                         // Sin espacios
+};
+
+const getFileName = (path) => {
+    return normalizePath(path).split('/').pop();
+};
+
 // === EVENT LISTENERS ===
 
 document.getElementById('zip-input').addEventListener('change', async (e) => {
@@ -38,17 +51,44 @@ async function processZip(file) {
         appState.zipContent = zip;
         appState.sourceType = 'zip';
 
-        // 1. Búsqueda de archivos
-        const pFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "datos_partido.json");
-        const cFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "datos_cortes.json");
-        const vFileName = Object.keys(zip.files).find(f => {
-            const name = f.split('/').pop().toLowerCase();
-            return name.includes("valoracion") && name.endsWith(".json");
+        console.log('🔍 Archivos en ZIP (primeros 10):', Object.keys(zip.files).slice(0, 10));
+
+        // 1. Búsqueda de archivos - NORMALIZAR PARA MAC/SAFARI
+        const pFileName = Object.keys(zip.files).find(f => {
+            const normalized = normalizePath(f);
+            const name = getFileName(f);
+            return name === "datos_partido.json" && !normalized.includes('__macosx') && !normalized.includes('.ds_store');
         });
-        const rFileName = Object.keys(zip.files).find(f => f.split('/').pop().toLowerCase() === "resumen_informe.json");
+        
+        const cFileName = Object.keys(zip.files).find(f => {
+            const normalized = normalizePath(f);
+            const name = getFileName(f);
+            return name === "datos_cortes.json" && !normalized.includes('__macosx') && !normalized.includes('.ds_store');
+        });
+        
+        const vFileName = Object.keys(zip.files).find(f => {
+            const normalized = normalizePath(f);
+            const name = getFileName(f);
+            return name.includes("valoracion") && name.endsWith(".json") && !normalized.includes('__macosx');
+        });
+        
+        const rFileName = Object.keys(zip.files).find(f => {
+            const normalized = normalizePath(f);
+            const name = getFileName(f);
+            return name === "resumen_informe.json" && !normalized.includes('__macosx');
+        });
+
+        console.log(`📋 Archivos encontrados:
+            - Partido: ${pFileName ? '✅' : '❌'}
+            - Cortes: ${cFileName ? '✅' : '❌'}
+            - Valoraciones: ${vFileName ? '✅' : '❌'}
+            - Resumen: ${rFileName ? '✅' : '❌'}`);
 
         if (!pFileName || !cFileName || !vFileName) {
-            throw new Error('Faltan archivos esenciales (partido, cortes o valoraciones)');
+            throw new Error(`Faltan archivos esenciales:
+                - datos_partido.json: ${pFileName ? '✅' : '❌'}
+                - datos_cortes.json: ${cFileName ? '✅' : '❌'}
+                - valoraciones_*.json: ${vFileName ? '✅' : '❌'}`);
         }
 
         // 2. Carga secuencial de datos críticos
@@ -88,9 +128,9 @@ async function processZip(file) {
         // 5. Carga de datos auxiliares (Jugadas e Impactos)
         // Usamos Promise.all para cargar en paralelo y mejorar velocidad en iOS
         const [jugadasPaths, impactosPaths, tomaDatosPaths] = [
-            Object.keys(zip.files).filter(p => p.toLowerCase().includes('dibujar_jugadas/') && p.endsWith('.json')),
-            Object.keys(zip.files).filter(p => p.toLowerCase().includes('impacto_porteria/') && p.endsWith('.json')),
-            Object.keys(zip.files).filter(p => p.toLowerCase().includes('toma_datos/') && p.endsWith('.json'))
+            Object.keys(zip.files).filter(p => normalizePath(p).includes('dibujar_jugadas/') && p.endsWith('.json')),
+            Object.keys(zip.files).filter(p => normalizePath(p).includes('impacto_porteria/') && p.endsWith('.json')),
+            Object.keys(zip.files).filter(p => normalizePath(p).includes('toma_datos/') && p.endsWith('.json'))
         ];
 
         appState.jugadasData = (await Promise.all(jugadasPaths.map(p => zip.file(p).async("string").then(JSON.parse)))).filter(Boolean);
@@ -117,16 +157,27 @@ async function processFolder(files) {
         appState.localFiles  = files;
         appState.sourceType  = 'folder';
 
-        const pFile = files.find(f => f.name === "datos_partido.json");
-        const cFile = files.find(f => f.name === "datos_cortes.json");
-        const vFile = files.find(f => f.name === "valoraciones_cortes.json");
+        // BÚSQUEDA NORMALIZADA PARA MAC
+        const pFile = files.find(f => getFileName(f.name) === "datos_partido.json");
+        const cFile = files.find(f => getFileName(f.name) === "datos_cortes.json");
         
-        // NUEVO: Búsqueda flexible de resumen_informe.json local
-        const rFile = files.find(f => f.name === "resumen_informe.json");
+        // Busca ambos nombres posibles para valoraciones
+        const vFile = files.find(f => {
+            const name = getFileName(f.name);
+            return name.includes("valoracion") && name.endsWith(".json");
+        });
+        
+        const rFile = files.find(f => getFileName(f.name) === "resumen_informe.json");
 
-        if (!pFile) throw new Error('No se encontró datos_partido.json');
-        if (!cFile) throw new Error('No se encontró datos_cortes.json');
-        if (!vFile) throw new Error('No se encontró valoraciones_cortes.json');
+        console.log(`📋 Archivos encontrados en carpeta:
+            - Partido: ${pFile ? '✅ ' + pFile.name : '❌'}
+            - Cortes: ${cFile ? '✅ ' + cFile.name : '❌'}
+            - Valoraciones: ${vFile ? '✅ ' + vFile.name : '❌'}
+            - Resumen: ${rFile ? '✅ ' + rFile.name : '❌'}`);
+
+        if (!pFile) throw new Error('❌ No se encontró datos_partido.json');
+        if (!cFile) throw new Error('❌ No se encontró datos_cortes.json');
+        if (!vFile) throw new Error('❌ No se encontró valoraciones_cortes.json (o valoraciones_*.json)');
 
         appState.partidoData  = JSON.parse(await pFile.text());
         appState.datosCortes  = JSON.parse(await cFile.text());
@@ -157,8 +208,8 @@ async function processFolder(files) {
         // 📋 CARGA DE JUGADAS TÁCTICAS DESDE CARPETA LOCAL
         appState.jugadasData = [];
         const jugadasFiles = files.filter(f => {
-            const normalizedPath = f.webkitRelativePath.replace(/\\/g, '/').toLowerCase();
-            return normalizedPath.includes('dibujar_jugadas/') && f.name.endsWith('.json');
+            const normalizedPath = normalizePath(f.webkitRelativePath || '');
+            return normalizedPath.includes('dibujar_jugadas/') && f.name.toLowerCase().endsWith('.json');
         });
 
         for (const file of jugadasFiles) {
@@ -174,8 +225,8 @@ async function processFolder(files) {
         // 🥅 CARGA DE IMPACTOS PORTERÍA DESDE CARPETA LOCAL
         appState.impactosPorteriaData = [];
         const impactosFiles = files.filter(f => {
-            const normalizedPath = f.webkitRelativePath.replace(/\\/g, '/').toLowerCase();
-            return normalizedPath.includes('impacto_porteria/') && f.name.endsWith('.json');
+            const normalizedPath = normalizePath(f.webkitRelativePath || '');
+            return normalizedPath.includes('impacto_porteria/') && f.name.toLowerCase().endsWith('.json');
         });
 
         for (const file of impactosFiles) {
@@ -201,8 +252,8 @@ async function processFolder(files) {
         // 📋 CARGA DE TOMA DE DATOS DESDE CARPETA LOCAL
         appState.tomaDatos = [];
         const tomaDatosFiles = files.filter(f => {
-            const normalizedPath = f.webkitRelativePath.replace(/\\/g, '/').toLowerCase();
-            return normalizedPath.includes('toma_datos/') && f.name.endsWith('.json');
+            const normalizedPath = normalizePath(f.webkitRelativePath || '');
+            return normalizedPath.includes('toma_datos/') && f.name.toLowerCase().endsWith('.json');
         });
 
         for (const file of tomaDatosFiles) {
@@ -233,7 +284,7 @@ async function getFileAsset(rutaRelativa) {
         
         if (!file) {
             const realPath = Object.keys(appState.zipContent.files).find(path => 
-                path.replace(/\\/g, '/').endsWith(nombreArchivoBuscado)
+                getFileName(path) === getFileName(nombreArchivoBuscado)
             );
             if (realPath) file = appState.zipContent.file(realPath);
         }
@@ -245,7 +296,7 @@ async function getFileAsset(rutaRelativa) {
     } else {
         const fileObj = appState.allFilesFlat.find(f => {
             if (!f) return false;
-            return f.name === nombreArchivoBuscado;
+            return getFileName(f.name) === getFileName(nombreArchivoBuscado);
         });
 
         if (fileObj) {
@@ -277,12 +328,12 @@ function showError(message) {
 
 function getCortesPorCarpeta(folderName) {
     const cortes = [];
-    const buscarAnalizados = folderName.toLowerCase().includes('analizar');
+    const buscarAnalizados = normalizePath(folderName).includes('analizar');
 
     console.log(`--- MODO REPARACIÓN: Buscando ${buscarAnalizados ? 'ANALIZADOS' : 'BRUTOS'} ---`);
 
     appState.allFilesFlat.forEach((item) => {
-        const fileName = item.name;
+        const fileName = item.name.toLowerCase();
         
         if (fileName.endsWith('.mp4') || fileName.endsWith('.webm')) {
             const esAnalizado = fileName.includes('_analizado');
@@ -292,17 +343,17 @@ function getCortesPorCarpeta(folderName) {
                 let key = fileName.replace(/\.[^.]+$/, '').replace('_analizado', '');
                 const partes = key.split('_');
                 
-                const periodo = partes.find(p => p.includes('P')) || '—';
+                const periodo = partes.find(p => p.includes('p')) || '—';
                 const tiempo = partes.find(p => p.includes('m')) || '00:00';
 
                  cortes.push({
                     id: key,
-                    nombre_archivo: fileName,
+                    nombre_archivo: item.name,
                     periodo: periodo,
                     minuto: tiempo.split('m')[0] || '0',
                     segundo: tiempo.split('m')[1]?.replace('s', '') || '00',
                     tipo_jugada: partes.slice(3).join(' ') || 'Acción',
-                    ruta_relativa: fileName
+                    ruta_relativa: item.name
                 });
             }
         }
