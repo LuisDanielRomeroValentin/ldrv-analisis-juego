@@ -22,6 +22,14 @@ const stats = {
     },
 
     renderizarEstadisticas: function() {
+        console.log("DEBUG: renderizarEstadisticas llamado.");
+        console.log("DEBUG: Contenido de appState.tomaDatos:", appState?.tomaDatos);
+        
+        if (!appState || !appState.tomaDatos || appState.tomaDatos.length === 0) {
+            console.warn("DEBUG: renderizarEstadisticas abortado. Datos vacíos o no listos.");
+            return;
+        }
+        
         const section = document.getElementById('stats');
         const container = document.getElementById('stats-content');
         

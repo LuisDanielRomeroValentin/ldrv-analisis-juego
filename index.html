@@ -40,7 +40,7 @@
             <button id="btn-nav-analizados-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
             <button id="btn-nav-tiros-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-impactos'); ui.setActiveBtn(this); ui.closeMobileMenu()">🥅 Impactos Portería</button>
             <button id="btn-nav-jugadas-mobile" class="btn nav-btn w-100" onclick="ui.showSection('jugadas-section'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Pizarra Táctica</button>
-            <button id="btn-nav-stats-mobile" class="btn nav-btn w-100" onclick="ui.showSection('stats'); ui.setActiveBtn(this); ui.closeMobileMenu()">📈 Estadísticas</button>
+            <button id="btn-nav-stats-mobile" class="btn nav-btn w-100" onclick="ui.showSection('stats'); ui.setActiveBtn(this); ui.closeMobileMenu(); stats.renderizarEstadisticas();">📈 Estadísticas</button>
             <button id="btn-nav-resumen-mobile" class="btn nav-btn w-100 fw-bold text-success" onclick="ui.showSection('v-resumen'); ui.setActiveBtn(this); ui.closeMobileMenu(); if(window.resume) resume.renderizar();">📋 Ver Resumen</button>
         </div>
     </header>
@@ -225,21 +225,6 @@
         </div>
     </div>
 
-    <script>
-        window.onerror = function(msg, url, line) {
-            alert("❌ ERROR EN IPHONE:\n" + msg + "\nLínea: " + line);
-            return false;
-        };
-        
-        // Verificación extra de carga
-        window.addEventListener('load', () => {
-            const statsContainer = document.getElementById('stats-content');
-            if (!statsContainer) {
-                alert("⚠️ ADVERTENCIA: El contenedor 'stats-content' no se encontró en el DOM.");
-            }
-        });
-    </script>
-
     <script src="js/app.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/plays.js"></script>
@@ -247,5 +232,20 @@
     <script src="js/resume.js"></script>
     <script src="js/plays.renderers.js"></script>
     <script src="js/stats.js"></script> 
+
+    <script>
+        // INICIALIZACIÓN SEGURA DE ESTADÍSTICAS
+        document.addEventListener('DOMContentLoaded', () => {
+            // Delay de 500ms para asegurar que todos los scripts estén cargados
+            setTimeout(() => {
+                if (window.stats && typeof window.stats.init === 'function') {
+                    console.log('✅ Inicializando stats en iPhone...');
+                    window.stats.init();
+                } else {
+                    console.warn('⚠️ stats.js no está disponible aún');
+                }
+            }, 500);
+        });
+    </script>
 </body>
 </html>
