@@ -22,7 +22,10 @@ const stats = {
     },
 
     renderizarEstadisticas: function() {
+        const section = document.getElementById('stats');
         const container = document.getElementById('stats-content');
+        
+        if (section) section.style.display = 'block';
         if (!container) return;
 
         container.innerHTML = ''; 
