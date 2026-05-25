@@ -225,6 +225,21 @@
         </div>
     </div>
 
+    <script>
+        window.onerror = function(msg, url, line) {
+            alert("❌ ERROR EN IPHONE:\n" + msg + "\nLínea: " + line);
+            return false;
+        };
+        
+        // Verificación extra de carga
+        window.addEventListener('load', () => {
+            const statsContainer = document.getElementById('stats-content');
+            if (!statsContainer) {
+                alert("⚠️ ADVERTENCIA: El contenedor 'stats-content' no se encontró en el DOM.");
+            }
+        });
+    </script>
+
     <script src="js/app.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/plays.js"></script>
