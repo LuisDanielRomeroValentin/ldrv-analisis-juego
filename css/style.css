@@ -854,14 +854,59 @@ body.dark-mode {
     display: none;
 }
 
-/* Cuando el usuario abre el diálogo de impresión, se activa esto */
 @media print {
-    /* Mostramos la cabecera */
-    .dossier-header-print {
-        display: block !important;
+    /* 1. Limpieza global de fondo y colores para PDF */
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
-    /* Ocultamos elementos innecesarios al imprimir (como los botones) */
-    .no-print {
+
+    /* 2. Cabecera repetible (Debe estar fuera de .style-dossier en tu HTML) */
+    .dossier-header-print {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 160px !important; /* Aumentamos la altura de 120 a 160 */
+        display: block !important;
+        background: #ffffff !important;
+        border-bottom: 2px solid #10b981 !important;
+        padding-top: 20px !important; /* Espacio libre arriba del logo */
+        z-index: 9999 !important;
+    }
+
+    /* 3. Contenedor principal ajustado para no solapar la cabecera */
+    .style-dossier {
+        position: relative !important;
+        margin-top: 180px !important; /* Debe ser mayor que el height de la cabecera (160px) */
+        padding: 0 15mm !important;
+        background: #ffffff !important;
+    }
+
+    /* 4. Limpieza de elementos visuales (fondos oscuros, sombras, etc) */
+    * {
+        background: transparent !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    /* 5. Asegurar que las tarjetas no se corten mal entre páginas */
+    .video-card-mini, .report-section, .dossier-card {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* 6. Ocultar menús y botones */
+    .no-print, .navbar, button, .btn, .hamburger-btn, .mobile-nav-dropdown {
         display: none !important;
+    }
+
+    .row.g-2.mb-4.p-3.rounded {
+        margin-top: 20px !important;
+        margin-bottom: 30px !important; /* Más espacio antes de "FO FASE FINALIZACION" */
+        page-break-after: avoid; /* Evita que el título se quede solo al final de una hoja */
     }
 }

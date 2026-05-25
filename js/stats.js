@@ -75,14 +75,15 @@ const stats = {
         // --- Generación del HTML con cabecera unificada ---
         const datosPartido = appState.partidoData || {};
         
-        let html = `
+        let html = `<div class="style-dossier">`;
+
+        html += `
             <div class="mt-3 d-flex justify-content-between align-items-center mb-4 px-2 no-print">
                 <div class="status-badge-ldr mb-0">
                     Acciones Analizadas: <b>${datos.length}</b>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-outline-success" onclick="stats.exportarCSV()">📥 CSV</button>
-                    <button class="btn btn-sm btn-outline-info" onclick="window.print()">🖨️ PDF</button>
                 </div>
             </div>
 
@@ -143,37 +144,50 @@ const stats = {
                 </div>
             `;
         }
-        html += '</div>';
+        html += '</div></div>';
         
         container.innerHTML = html;
     },
 
     exportarCSV: function() {
         const datos = appState.tomaDatos;
+        const infoPartido = appState.partidoData || {}; // Obtenemos los datos del partido
+        
         if (!datos || datos.length === 0) return alert("No hay datos para exportar");
 
-        let csvContent = "data:text/csv;charset=utf-8,Tipo Jugada,Detalle,Comun Seleccionado,Minuto,Segundo,Periodo\n";
+        // 1. Definimos la cabecera incluyendo los campos del partido
+        let csvContent = "Fecha Partido,Local,Visitante,Tipo Jugada,Detalle,Comun Seleccionado,Minuto,Segundo,Periodo\n";
 
         datos.forEach(item => {
             const detalles = Array.isArray(item.detalle_botones) ? item.detalle_botones.join(' > ') : '';
+            
+            // 2. Preparamos la fila con los datos de contexto del partido
             const row = [
+                infoPartido.fecha || new Date().toLocaleDateString(), // Si no hay fecha, usamos la de hoy
+                `"${(infoPartido.local || 'Local').replace(/"/g, '""')}"`,
+                `"${(infoPartido.visitante || 'Visitante').replace(/"/g, '""')}"`,
                 item.tipo_jugada || 'Sin Tipo',
-                `"${detalles}"`,
+                `"${detalles.replace(/"/g, '""')}"`,
                 item.comun_seleccionado || '',
                 item.info_tiempo?.minuto || '',
                 item.info_tiempo?.segundo || '',
                 item.info_tiempo?.periodo || ''
             ].join(",");
+            
             csvContent += row + "\n";
         });
 
-        const encodedUri = encodeURI(csvContent);
+        // 3. Creamos el enlace de descarga (usando Blob para evitar problemas con archivos grandes)
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `analisis_stats_${new Date().toISOString().slice(0,10)}.csv`);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `stats_${(infoPartido.local || 'partido').replace(/\s/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 };
 

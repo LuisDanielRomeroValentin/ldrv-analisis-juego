@@ -195,14 +195,8 @@
 
         <section id="v-resumen" class="app-section" style="display:none;">
             <div class="section-header-ldrv mb-3 no-print">
-                <div class="section-header-left">
-                    <span class="section-tag" style="color: var(--ldr-green);">INFORME TÁCTICO INTEGRAL</span>
-                    <h2 class="section-title">Resumen Ejecutivo de Rendimiento</h2>
-                </div>
-                <div class="section-header-right">
-                    <button class="btn btn-success fw-bold d-flex align-items-center gap-2 px-3 shadow" onclick="window.print()">
-                        🖨️ Exportar a PDF / Imprimir
-                    </button>
+                <div class="d-flex gap-2 ms-auto">
+                    <button class="btn btn-sm btn-outline-info" onclick="window.print()">🖨️ PDF</button>
                 </div>
             </div>
 
@@ -229,6 +223,7 @@
     <script src="js/ui.js"></script>
     <script src="js/plays.js"></script>
     <script src="js/shots.js"></script>
+    <script src="js/reportEngine.js"></script>
     <script src="js/resume.js"></script>
     <script src="js/plays.renderers.js"></script>
     <script src="js/stats.js"></script> 
