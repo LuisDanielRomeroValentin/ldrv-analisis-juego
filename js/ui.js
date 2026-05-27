@@ -413,7 +413,8 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (btnId === 'btn-nav-stats') {
                 ui.showSection('stats');
                 if (typeof stats !== 'undefined') {
-                    stats.renderizarEstadisticas();
+                    const btnGeneral = document.getElementById('btn-stats-general');
+                    stats.renderizar('datos', btnGeneral);
                 }
             }
         });

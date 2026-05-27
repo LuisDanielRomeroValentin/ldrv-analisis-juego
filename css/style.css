@@ -910,3 +910,35 @@ body.dark-mode {
         page-break-after: avoid; /* Evita que el título se quede solo al final de una hoja */
     }
 }
+
+#stats-tabs {
+    border-bottom: 1px solid #333 !important; /* Línea separadora oscura */
+}
+
+#stats-tabs .nav-link {
+    color: #888; /* Color tenue cuando no está seleccionado */
+    background: transparent;
+    border: none !important;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+
+#stats-tabs .nav-link:hover {
+    color: #22c55e; /* Verde LDR al pasar el ratón */
+}
+
+#stats-tabs .nav-link.active {
+    color: #000 !important; /* Texto negro para que contraste con el fondo verde */
+    background-color: #22c55e !important; /* Verde LDR de fondo */
+    font-weight: bold;
+    border-radius: 4px 4px 0 0 !important;
+}
+
+#auditModal .modal-content {
+    resize: both;
+    overflow: auto;
+    min-width: 500px;
+    min-height: 400px;
+}
+
+.modal-header { cursor: move; }

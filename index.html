@@ -40,7 +40,7 @@
             <button id="btn-nav-analizados-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
             <button id="btn-nav-tiros-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-impactos'); ui.setActiveBtn(this); ui.closeMobileMenu()">🥅 Impactos Portería</button>
             <button id="btn-nav-jugadas-mobile" class="btn nav-btn w-100" onclick="ui.showSection('jugadas-section'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Pizarra Táctica</button>
-            <button id="btn-nav-stats-mobile" class="btn nav-btn w-100" onclick="ui.showSection('stats'); ui.setActiveBtn(this); ui.closeMobileMenu(); stats.renderizarEstadisticas();">📈 Estadísticas</button>
+            <button id="btn-nav-stats-mobile" class="btn nav-btn w-100" onclick="ui.showSection('stats'); ui.setActiveBtn(this); ui.closeMobileMenu(); stats.renderizar('datos', document.getElementById('btn-stats-general'));">📈 Estadísticas</button>
             <button id="btn-nav-resumen-mobile" class="btn nav-btn w-100 fw-bold text-success" onclick="ui.showSection('v-resumen'); ui.setActiveBtn(this); ui.closeMobileMenu(); if(window.resume) resume.renderizar();">📋 Ver Resumen</button>
         </div>
     </header>
@@ -206,6 +206,11 @@
         </section>
 
         <section id="stats" class="app-section" style="display:none;">
+            <div class="nav nav-tabs mb-4 px-2" id="stats-tabs">
+                <button class="nav-link active" id="btn-stats-general" onclick="stats.renderizar('datos', this)">General</button>
+                <button class="nav-link" id="btn-stats-jugadas" onclick="stats.renderizar('jugadas', this)">Jugadas</button>
+            </div>
+            
             <div id="stats-content" class="stats-grid"></div>
         </section>
 
@@ -219,6 +224,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/app.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/plays.js"></script>
@@ -226,21 +232,9 @@
     <script src="js/reportEngine.js"></script>
     <script src="js/resume.js"></script>
     <script src="js/plays.renderers.js"></script>
-    <script src="js/stats.js"></script> 
-
-    <script>
-        // INICIALIZACIÓN SEGURA DE ESTADÍSTICAS
-        document.addEventListener('DOMContentLoaded', () => {
-            // Delay de 500ms para asegurar que todos los scripts estén cargados
-            setTimeout(() => {
-                if (window.stats && typeof window.stats.init === 'function') {
-                    console.log('✅ Inicializando stats en iPhone...');
-                    window.stats.init();
-                } else {
-                    console.warn('⚠️ stats.js no está disponible aún');
-                }
-            }, 500);
-        });
-    </script>
+    <script src="js/stats_orquestador.js"></script>
+    <script src="js/stats_datos.js"></script>
+    <script src="js/stats_jugadas.js"></script>
+    
 </body>
 </html>
