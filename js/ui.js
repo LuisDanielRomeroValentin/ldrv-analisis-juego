@@ -33,11 +33,6 @@ const ui = {
             ui.populateJugadaFilter(datosApp.analizar_corte, 'filtro-analizados');
             ui.filterAndRender(datosApp.analizar_corte, 'container-analizados', 'filtro-analizados');
 
-            // 📋 INICIALIZACIÓN MÓDULO JUGADAS TÁCTICAS
-            console.log("--- COMPROBACIÓN UI PARA JUGADAS ---");
-            console.log("¿Existe el objeto plays?:", typeof plays !== 'undefined');
-            console.log("¿Qué hay en appState.jugadasData en este momento?:", appState.jugadasData);
-
             if (typeof plays !== 'undefined' && appState.jugadasData && appState.jugadasData.length > 0) {
                 console.log("✅ Condición superada. Inicializando Pizarra Táctica...");
                 plays.init();
@@ -47,7 +42,6 @@ const ui = {
             }
 
             // 🥅 INICIALIZACIÓN MÓDULO MAPA DE TIROS
-            console.log("--- COMPROBACIÓN UI PARA IMPACTOS DE PORTERÍA ---");
             if (typeof shots !== 'undefined' && appState.impactosPorteriaData && appState.impactosPorteriaData.length > 0) {
                 console.log("✅ Condición superada. Inicializando Mapa de Tiros...");
                 shots.init();
@@ -88,14 +82,27 @@ const ui = {
 
         const tipos = [...new Set(cortes.map(c => c.tipo_jugada || c.tipo || 'Sin clasificar'))].sort();
 
-        select.innerHTML = '<option value="">Todas las jugadas</option>';
+        select.innerHTML = '<option value="" data-i18n="filter.all_plays">Todas las jugadas</option>';
+        
         tipos.forEach(tipo => {
             const opt = document.createElement('option');
             opt.value = tipo;
+            
+            const slug = tipo.toLowerCase().replace(/\s+/g, '_');
+            const translationKey = `plays.${slug}`;
+            
+            opt.setAttribute('data-i18n', translationKey);
+            
             const txt = tipo.replace(/_/g, ' ');
             opt.textContent = txt.charAt(0).toUpperCase() + txt.slice(1);
+            
             select.appendChild(opt);
         });
+
+        // Forzamos al traductor a traducir lo que acabamos de crear
+        if (typeof translator !== 'undefined') {
+            translator.applyTranslations();
+        }
     },
 
     filterAndRender: (cortesOriginal, containerId, filterId) => {
@@ -112,7 +119,6 @@ const ui = {
     },
 
     // ── CARD ──────────────────────────────────────────────────────────
-
     _buildCard: (corte) => {
         const col = document.createElement('div');
         col.className = 'col';
@@ -120,27 +126,25 @@ const ui = {
         const minuto      = corte.minuto  || '0';
         const segundo     = corte.segundo || '00';
         const periodo     = corte.periodo || '—';
-        const tipoLimpio  = (corte.tipo_jugada || corte.tipo || 'Accion').replace(/_/g, ' ');
-        const tipoCapital = tipoLimpio.charAt(0).toUpperCase() + tipoLimpio.slice(1);
-        const label       = `${tipoCapital} | ${minuto}:${segundo}`;
+        
+        // Simplificamos la etiqueta de tiempo
+        const label       = `${minuto}:${segundo}`;
 
         const etiquetasHTML = (corte.etiquetas || [])
             .map(e => `<span class="etiqueta-badge">${e}</span>`).join('');
         const notasHTML = corte.notas
             ? `<p class="clip-notas">"${corte.notas}"</p>` : '';
 
-        // Escapar rutas para JS
         const rutaSafe  = (corte.ruta_relativa || corte.id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         const labelSafe = label.replace(/'/g, "\\'");
 
         col.innerHTML = `
             <div class="video-card-mini h-100 d-flex flex-column justify-content-between">
                 <div class="mb-3">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <small class="text-dim">Accion tactica</small>
+                    <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="periodo-badge">${periodo}</span>
+                        <span class="clip-time fw-bold">${label}</span>
                     </div>
-                    <span class="clip-time fw-bold d-block mb-1">${label}</span>
                     ${etiquetasHTML ? `<div class="d-flex flex-wrap gap-1 mb-1">${etiquetasHTML}</div>` : ''}
                     ${notasHTML}
                 </div>
@@ -156,19 +160,31 @@ const ui = {
     // ── ACORDEÓN DE VALORACIÓN ───────────────────────────────────────
 
     _buildValoracionToggle: (valoracion, cortes) => {
+        // 1. Definimos las claves de traducción
         const cfg = {
-            alta:  { titulo: '&#11088; Prioridad Alta',  clase: 'p-alta',  open: true  },
-            media: { titulo: '&#128204; Prioridad Media', clase: 'p-media', open: false },
-            baja:  { titulo: '&#128313; Prioridad Baja',  clase: 'p-baja',  open: false }
+            alta:  { key: 'priority.high',   titulo: 'Prioridad Alta',  clase: 'p-alta',  open: true  },
+            media: { key: 'priority.medium', titulo: 'Prioridad Media', clase: 'p-media', open: false },
+            baja:  { key: 'priority.low',    titulo: 'Prioridad Baja',  clase: 'p-baja',  open: false }
         };
-        const { titulo, clase, open } = cfg[valoracion] || cfg.baja;
+        
+        // Si no encuentra la prioridad, usa baja por defecto
+        const { key, titulo, clase, open } = cfg[valoracion] || cfg.baja;
 
         const details = document.createElement('details');
         details.className = `group-accordion accordion-inner ${clase}`;
         if (open) details.open = true;
 
         const summary = document.createElement('summary');
-        summary.innerHTML = `<strong>${titulo}</strong><span class="count">${cortes.length} clips</span>`;
+        
+        // 2. Aplicamos el data-i18n usando la clave definida arriba
+        summary.setAttribute('data-i18n', key);
+        
+        // 3. Mantenemos la estructura visual (iconos y contador)
+        // El traductor reemplazará el texto dentro del <strong>
+        summary.innerHTML = `
+            <strong>${titulo}</strong>
+            <span class="count">${cortes.length} clips</span>
+        `;
 
         const grid = document.createElement('div');
         grid.className = 'row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3 g-md-4 py-3 px-3';
@@ -204,21 +220,27 @@ const ui = {
 
         tiposOrdenados.forEach((tipo, idx) => {
             const cortesDelTipo = porTipo[tipo];
-            const tipoLabel    = tipo.replace(/_/g, ' ');
-            const tipoCapital  = tipoLabel.charAt(0).toUpperCase() + tipoLabel.slice(1);
+            
+            // --- Lógica de traducción para el título del tipo ---
+            const slug = tipo.toLowerCase().replace(/\s+/g, '_');
+            const translationKey = `plays.${slug}`;
+            
+            const tipoLabel = tipo.replace(/_/g, ' ');
+            const tipoCapital = tipoLabel.charAt(0).toUpperCase() + tipoLabel.slice(1);
 
             const detailsTipo = document.createElement('details');
             detailsTipo.className = 'group-accordion accordion-tipo';
             if (idx === 0) detailsTipo.open = true;
 
             const summaryTipo = document.createElement('summary');
+            summaryTipo.setAttribute('data-i18n', translationKey);
             summaryTipo.innerHTML = `
                 <strong>&#128194; ${tipoCapital.toUpperCase()}</strong>
                 <span class="count">${cortesDelTipo.length} clips</span>
             `;
             detailsTipo.appendChild(summaryTipo);
 
-            // 2. Agrupar por valoración dentro del tipo
+            // --- RESTAURAMOS EL AGRUPAMIENTO POR VALORACIÓN ---
             const porVal = { alta: [], media: [], baja: [] };
             cortesDelTipo.forEach(c => {
                 const v = c.prioridad || 'baja';
@@ -228,15 +250,17 @@ const ui = {
             const innerWrap = document.createElement('div');
             innerWrap.className = 'accordion-inner-wrap';
 
+            // Renderizamos solo si hay clips en esa prioridad
             ['alta', 'media', 'baja'].forEach(val => {
-                if (porVal[val].length === 0) return;
-                innerWrap.appendChild(ui._buildValoracionToggle(val, porVal[val]));
+                if (porVal[val].length > 0) {
+                    innerWrap.appendChild(ui._buildValoracionToggle(val, porVal[val]));
+                }
             });
 
             detailsTipo.appendChild(innerWrap);
             container.appendChild(detailsTipo);
         });
-    },
+    },  
 
     // ── 🥅 MÓDULO AUXILIAR MAPA DE TIROS ──────────────────────────────
 

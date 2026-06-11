@@ -80,7 +80,7 @@ const stats = {
         html += `
             <div class="mt-3 d-flex justify-content-between align-items-center mb-4 px-2 no-print">
                 <div class="status-badge-ldr mb-0">
-                    Acciones Analizadas: <b>${datos.length}</b>
+                    <span data-i18n="stats.actions_analyzed">Acciones Analizadas</span>: <b>${datos.length}</b>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-outline-success" onclick="stats.exportarCSV()">📥 CSV</button>
@@ -124,12 +124,12 @@ const stats = {
                         </div>
                         
                         <div class="stats-body">
-                            <small class="text-dim d-block mb-2">DETALLE TÁCTICO</small>
-                            ${Object.keys(data.detalles).length > 0 ? stats.renderDetalle(data.detalles) : '<small class="text-muted">Sin detalles</small>'}
+                            <small class="text-dim d-block mb-2" data-i18n="stats.tactical_detail">DETALLE TÁCTICO</small>
+                            ${Object.keys(data.detalles).length > 0 ? stats.renderDetalle(data.detalles) : '<small class="text-muted" data-i18n="stats.no_details">Sin detalles</small>'}
                             
                             ${Object.keys(data.comunes).length > 0 ? `
                                 <div class="mt-3 pt-2 border-top border-secondary">
-                                    <small class="text-dim d-block mb-1">CONCEPTOS COMUNES</small>
+                                    <small class="text-dim d-block mb-1" data-i18n="stats.common_concepts">CONCEPTOS COMUNES</small>
                                     <ul class="list-unstyled mb-0">
                                         ${Object.entries(data.comunes).map(([c, count]) => `
                                             <li class="d-flex justify-content-between small" style="color: #10b981;">
@@ -147,6 +147,11 @@ const stats = {
         html += '</div></div>';
         
         container.innerHTML = html;
+
+        if (typeof translator !== 'undefined') {
+            translator.applyTranslations();
+        }
+
     },
 
     exportarCSV: function() {

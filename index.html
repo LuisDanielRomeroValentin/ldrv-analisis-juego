@@ -18,15 +18,29 @@
                 <span class="fw-bold text-uppercase d-none d-sm-inline ldrv-brand-text">Luis Daniel Romero Valentín (LDRV)</span>
             </a>
 
+            <div class="d-flex gap-2 ms-3 me-4 align-items-center">
+                <a href="#" onclick="translator.setLanguage('es'); return false;" class="d-inline-block">
+                    <img src="https://flagcdn.com/24x18/es.png" 
+                        srcset="https://flagcdn.com/48x36/es.png 2x, https://flagcdn.com/72x54/es.png 3x" 
+                        width="24" height="18" alt="Español" style="border-radius: 2px; cursor: pointer;">
+                </a>
+                
+                <a href="#" onclick="translator.setLanguage('en'); return false;" class="d-inline-block">
+                    <img src="https://flagcdn.com/24x18/gb.png" 
+                        srcset="https://flagcdn.com/48x36/gb.png 2x, https://flagcdn.com/72x54/gb.png 3x" 
+                        width="24" height="18" alt="English" style="border-radius: 2px; cursor: pointer;">
+                </a>
+            </div>
+            
             <div id="partido-info" class="status-badge-ldr d-none d-md-flex mx-auto">Esperando archivos…</div>
 
             <nav id="main-menu" class="d-none d-md-flex align-items-center gap-1 flex-shrink-0 ms-auto" style="visibility:hidden;">
-                <button id="btn-nav-brutos" class="btn nav-btn">📹 Vídeos</button>
-                <button id="btn-nav-analizados" class="btn nav-btn">🎯 Analizados</button>
-                <button id="btn-nav-tiros" class="btn nav-btn">🥅 Impactos Portería</button>
-                <button id="btn-nav-jugadas" class="btn nav-btn">🎮 Pizarra Táctica</button>
-                <button id="btn-nav-stats" class="btn nav-btn">📈 Estadísticas</button>
-                <button id="btn-nav-resumen" class="btn nav-btn btn-outline-success border-dashed fw-bold">📋 Ver Resumen</button>
+                <button id="btn-nav-brutos" class="btn nav-btn" data-i18n="nav.videos">📹 Vídeos</button>
+                <button id="btn-nav-analizados" class="btn nav-btn" data-i18n="nav.analizados">🎯 Analizados</button>
+                <button id="btn-nav-tiros" class="btn nav-btn" data-i18n="nav.impactos">🥅 Impactos Portería</button>
+                <button id="btn-nav-jugadas" class="btn nav-btn" data-i18n="nav.pizarra">🎮 Pizarra Táctica</button>
+                <button id="btn-nav-stats" class="btn nav-btn" data-i18n="nav.stats">📈 Estadísticas</button>
+                <button id="btn-nav-resumen" class="btn nav-btn btn-outline-success border-dashed fw-bold" data-i18n="nav.resumen">📋 Resumen</button>
             </nav>
 
             <button class="hamburger-btn d-flex d-md-none ms-auto" id="hamburger-btn" style="visibility:hidden;" aria-label="Menú">
@@ -35,13 +49,13 @@
         </div>
 
         <div id="mobile-nav" class="mobile-nav-dropdown d-md-none" style="display:none!important;">
-            <div id="partido-info-mobile" class="status-badge-ldr mb-2 mx-auto" style="display:none;"></div>
-            <button id="btn-nav-brutos-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-brutos'); ui.setActiveBtn(this); ui.closeMobileMenu()">📹 Vídeos</button>
-            <button id="btn-nav-analizados-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
-            <button id="btn-nav-tiros-mobile" class="btn nav-btn w-100" onclick="ui.showSection('v-impactos'); ui.setActiveBtn(this); ui.closeMobileMenu()">🥅 Impactos Portería</button>
-            <button id="btn-nav-jugadas-mobile" class="btn nav-btn w-100" onclick="ui.showSection('jugadas-section'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Pizarra Táctica</button>
-            <button id="btn-nav-stats-mobile" class="btn nav-btn w-100" onclick="ui.showSection('stats'); ui.setActiveBtn(this); ui.closeMobileMenu(); stats.renderizar('datos', document.getElementById('btn-stats-general'));">📈 Estadísticas</button>
-            <button id="btn-nav-resumen-mobile" class="btn nav-btn w-100 fw-bold text-success" onclick="ui.showSection('v-resumen'); ui.setActiveBtn(this); ui.closeMobileMenu(); if(window.resume) resume.renderizar();">📋 Ver Resumen</button>
+           
+            <button id="btn-nav-brutos-mobile" class="btn nav-btn w-100" data-i18n="nav.videos" onclick="ui.showSection('v-brutos'); ui.setActiveBtn(this); ui.closeMobileMenu()">📹 Vídeos</button>
+            <button id="btn-nav-analizados-mobile" class="btn nav-btn w-100" data-i18n="nav.analizados" onclick="ui.showSection('v-analizados'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎯 Analizados</button>
+            <button id="btn-nav-tiros-mobile" class="btn nav-btn w-100" data-i18n="nav.impactos" onclick="ui.showSection('v-impactos'); ui.setActiveBtn(this); ui.closeMobileMenu()">🥅 Impactos Portería</button>
+            <button id="btn-nav-jugadas-mobile" class="btn nav-btn w-100" data-i18n="nav.pizarra" onclick="ui.showSection('jugadas-section'); ui.setActiveBtn(this); ui.closeMobileMenu()">🎮 Pizarra Táctica</button>
+            <button id="btn-nav-stats-mobile" class="btn nav-btn w-100" data-i18n="nav.stats" onclick="ui.showSection('stats'); ui.setActiveBtn(this); ui.closeMobileMenu(); stats.renderizar('datos', document.getElementById('btn-stats-general'));">📈 Estadísticas</button>
+            <button id="btn-nav-resumen-mobile" class="btn nav-btn w-100 fw-bold text-success" data-i18n="nav.resumen" onclick="ui.showSection('v-resumen'); ui.setActiveBtn(this); ui.closeMobileMenu(); if(window.resume) resume.renderizar();">📋 Resumen</button>
         </div>
     </header>
 
@@ -51,31 +65,31 @@
             <div class="upload-container text-center shadow-lg">
                 <div class="row g-4 align-items-center justify-content-center">
                     <div class="col-12 col-md-5">
-                        <h3 class="upload-option-title">📦 Opción ZIP</h3>
+                        <h3 class="upload-option-title" data-i18n="upload.zip_title">📦 Opción ZIP</h3>
                         <input type="file" id="zip-input" accept=".zip" hidden>
-                        <label for="zip-input" class="btn btn-upload-zip w-100">Subir .ZIP</label>
+                        <label for="zip-input" class="btn btn-upload-zip w-100" data-i18n="upload.zip_btn">Subir .ZIP</label>
                     </div>
-                    <div class="col-12 col-md-2 fw-bold" style="color:var(--ldr-green)">Ó</div>
+                    <div class="col-12 col-md-2 fw-bold" style="color:var(--ldr-green)" data-i18n="upload.or">Ó</div>
                     <div class="col-12 col-md-5">
-                        <h3 class="upload-option-title">📁 Opción Carpeta</h3>
+                        <h3 class="upload-option-title" data-i18n="upload.folder_title">📁 Opción Carpeta</h3>
                         <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
-                        <label for="folder-input" class="btn btn-upload-folder w-100">Seleccionar Carpeta</label>
+                        <label for="folder-input" class="btn btn-upload-folder w-100" data-i18n="upload.folder_btn">Seleccionar Carpeta</label>
                     </div>
                 </div>
-                <p class="upload-help-text">Arrastra tus archivos o carpetas aquí para comenzar el análisis táctico</p>
+                <p class="upload-help-text" data-i18n="upload.help">Arrastra tus archivos o carpetas aquí para comenzar el análisis táctico</p>
             </div>
         </section>
 
         <section id="v-brutos" class="app-section" style="display:none;">
             <div class="section-header-ldrv">
                 <div class="section-header-left">
-                    <span class="section-tag">VÍDEOS BRUTOS</span>
-                    <h2 class="section-title">Acciones de Juego</h2>
+                    <span class="section-tag" data-i18n="vbrutos.tag">VÍDEOS BRUTOS</span>
+                    <h2 class="section-title" data-i18n="vbrutos.title">Acciones de Juego</h2>
                 </div>
                 <div class="section-header-right">
-                    <label for="tipo-jugada-filter" class="filter-label">Tipo</label>
+                    <label for="tipo-jugada-filter" class="filter-label" data-i18n="filter.type">Tipo</label>
                     <select id="tipo-jugada-filter" class="custom-select-ldrv">
-                        <option value="">Todas las jugadas</option>
+                        <option value="" data-i18n="filter.all_plays">Todas las jugadas</option>
                     </select>
                 </div>
             </div>
@@ -85,13 +99,13 @@
         <section id="v-analizados" class="app-section" style="display:none;">
             <div class="section-header-ldrv">
                 <div class="section-header-left">
-                    <span class="section-tag">CORTES ANALIZADOS</span>
-                    <h2 class="section-title">Análisis Táctico Final</h2>
+                    <span class="section-tag" data-i18n="vanalizados.tag">CORTES ANALIZADOS</span>
+                    <h2 class="section-title" data-i18n="vanalizados.title">Análisis Táctico Final</h2>
                 </div>
                 <div class="section-header-right">
-                    <label for="filtro-analizados" class="filter-label">Tipo</label>
+                    <label for="filtro-analizados" class="filter-label" data-i18n="filter.type">Tipo</label>
                     <select id="filtro-analizados" class="custom-select-ldrv">
-                        <option value="">Todas las jugadas</option>
+                        <option value="" data-i18n="filter.all_plays">Todas las jugadas</option>
                     </select>
                 </div>
             </div>
@@ -101,20 +115,20 @@
         <section id="v-impactos" class="app-section" style="display:none;">
             <div class="section-header-ldrv mb-2">
                 <div class="section-header-left">
-                    <span class="section-tag" style="color: var(--ldr-green);">ZONA DE FINALIZACIÓN</span>
-                    <h2 class="section-title">Mapa de Impactos FIFA (Estructura 2D)</h2>
+                    <span class="section-tag" style="color: var(--ldr-green);" data-i18n="impactos.tag">ZONA DE FINALIZACIÓN</span>
+                    <h2 class="section-title" data-i18n="impactos.title">Mapa de Impactos FIFA (Estructura 2D)</h2>
                 </div>
                 <div class="section-header-right d-flex gap-2 align-items-center">
-                    <label for="impactos-periodo-filter" class="filter-label">Periodo</label>
+                    <label for="impactos-periodo-filter" class="filter-label" data-i18n="filter.period">Periodo</label>
                     <select id="impactos-periodo-filter" class="custom-select-ldrv" style="max-width: 110px;">
-                        <option value="TODOS">Todos</option>
-                        <option value="1P">1ª Parte (1P)</option>
-                        <option value="2P">2ª Parte (2P)</option>
+                        <option value="TODOS" data-i18n="period.all">Todos</option>
+                        <option value="1P" data-i18n="period.1p">1ª Parte (1P)</option>
+                        <option value="2P" data-i18n="period.2p">2ª Parte (2P)</option>
                     </select>
 
-                    <label for="impactos-tipo-filter" class="filter-label">Tipo</label>
+                    <label for="impactos-tipo-filter" class="filter-label" data-i18n="filter.type">Tipo</label>
                     <select id="impactos-tipo-filter" class="custom-select-ldrv" style="max-width: 180px;">
-                        <option value="TODOS">Todos los tipos</option>
+                        <option value="TODOS" data-i18n="filter.all_types"></option>>Todos los tipos</option>
                     </select>
                 </div>
             </div>
@@ -144,23 +158,23 @@
         <section id="jugadas-section" class="app-section" style="display:none;">
             <div class="section-header-ldrv mb-2">
                 <div class="section-header-left">
-                    <span class="section-tag" style="color: var(--ldr-green);">ANÁLISIS EVOLUCIONADO</span>
-                    <h2 class="section-title">Pizarra Táctica Interactiva</h2>
+                    <span class="section-tag" style="color: var(--ldr-green);" data-i18n="pizarra.tag">ANÁLISIS EVOLUCIONADO</span>
+                    <h2 class="section-title" data-i18n="pizarra.title">Pizarra Táctica Interactiva</h2>
                 </div>
                 <div class="section-header-right d-flex gap-2 align-items-center">
                     <select id="play-mode-select" class="custom-select-ldrv" style="border-color: var(--ldr-green); max-width: 220px;">
-                        <option value="individual">1. Clip Individual</option>
-                        <option value="secuencial-acumulado">2. Playlist Histórica Acumulada</option>
-                        <option value="mapa-calor">3. Mapa de Calor (Por Cuadrícula)</option>
-                        <option value="red-pases">4. Red de Pases (Por Orden de Secuencia)</option>
-                        <option value="mapa-cuadrantes">5. Matriz Cuadrantes (6x4 Cuantitativa)</option>
-                        <option value="inicio-fin">6. Secuencia: Inicio ➔ Fin</option>
+                        <option value="individual" data-i18n="mode.individual">1. Clip Individual</option>
+                        <option value="secuencial-acumulado" data-i18n="mode.playlist">2. Playlist Histórica Acumulada</option>
+                        <option value="mapa-calor" data-i18n="mode.heatmap">3. Mapa de Calor (Por Cuadrícula)</option>
+                        <option value="red-pases" data-i18n="mode.passing">4. Red de Pases (Por Orden de Secuencia)</option>
+                        <option value="mapa-cuadrantes" data-i18n="mode.matrix">5. Matriz Cuadrantes (6x4 Cuantitativa)</option>
+                        <option value="inicio-fin" data-i18n="mode.sequence">6. Secuencia: Inicio ➔ Fin</option>
                     </select>
                     <select id="play-type-select" class="custom-select-ldrv" style="max-width: 160px;">
-                        <option value="">Filtrar Tipo...</option>
+                        <option value="" data-i18n="filter.all_types">Filtrar Tipo...</option>
                     </select>
                     <select id="play-file-select" class="custom-select-ldrv" style="max-width: 200px;" disabled>
-                        <option value="">Selecciona una jugada...</option>
+                        <option value="" data-i18n="filter.select_play">Selecciona una jugada...</option>
                     </select>
                     <div id="wrapper-sub-visualizacion" style="display: none;">
                         <select id="sub-visualizacion-select" class="custom-select-ldrv" style="border-color: #ccff00; max-width: 180px;">
@@ -207,8 +221,8 @@
 
         <section id="stats" class="app-section" style="display:none;">
             <div class="nav nav-tabs mb-4 px-2" id="stats-tabs">
-                <button class="nav-link active" id="btn-stats-general" onclick="stats.renderizar('datos', this)">General</button>
-                <button class="nav-link" id="btn-stats-jugadas" onclick="stats.renderizar('jugadas', this)">Jugadas</button>
+                <button class="nav-link active" id="btn-stats-general" onclick="stats.renderizar('datos', this)" data-i18n="tabs.general">General</button>
+                <button class="nav-link" id="btn-stats-jugadas" onclick="stats.renderizar('jugadas', this)" data-i18n="tabs.plays">Jugadas</button>
             </div>
             
             <div id="stats-content" class="stats-grid"></div>
@@ -235,6 +249,7 @@
     <script src="js/stats_orquestador.js"></script>
     <script src="js/stats_datos.js"></script>
     <script src="js/stats_jugadas.js"></script>
+    <script src="js/translator.js"></script>
     
 </body>
 </html>

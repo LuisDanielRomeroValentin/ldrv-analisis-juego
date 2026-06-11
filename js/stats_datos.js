@@ -46,7 +46,7 @@ const statsDatos = {
         html += `
             <div class="mt-3 d-flex justify-content-between align-items-center mb-4 px-2 no-print">
                 <div class="status-badge-ldr mb-0">
-                    Acciones Analizadas: <b>${datos.length}</b>
+                    <span data-i18n="stats.actions_analyzed">Acciones Analizadas</span>: <b>${datos.length}</b>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-outline-success" onclick="statsDatos.exportarCSV()">📥 CSV</button>
@@ -110,6 +110,11 @@ const statsDatos = {
         html += '</div></div>';
         
         container.innerHTML = html;
+
+        
+        if (typeof translator !== 'undefined') {
+            translator.applyTranslations();
+        }
     },
 
     exportarCSV: function() {

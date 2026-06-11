@@ -166,14 +166,29 @@ const plays = {
             return j.metadata ? (j.metadata.tipo_jugada || j.metadata.tipo) : 'Acción';
         }))].sort();
         
-        selectType.innerHTML = '<option value="">Todos los tipos...</option>';
+        selectType.innerHTML = '<option value="" data-i18n="filter.all_types">Todos los tipos...</option>';
+        
         tipos.forEach(tipo => {
             const opt = document.createElement('option');
             opt.value = tipo;
+            
+            // --- APLICAMOS LA MISMA LÓGICA DE NORMALIZACIÓN ---
+            // Convertimos "FO FASE INICIACION" -> "plays.fo_fase_iniciacion"
+            const slug = tipo.toLowerCase().replace(/\s+/g, '_');
+            const translationKey = `plays.${slug}`;
+            
+            opt.setAttribute('data-i18n', translationKey);
+            
+            // Fallback: texto legible para el usuario
             const txt = tipo.replace(/_/g, ' ').toUpperCase();
             opt.textContent = txt;
+            
             selectType.appendChild(opt);
         });
+
+        if (typeof translator !== 'undefined') {
+            translator.applyTranslations();
+        }
 
         plays.filtrarYOrdenarJugadas(selectType.value || "");
     },
@@ -203,7 +218,7 @@ const plays = {
         plays.listaFiltrada = filtradas;
         plays.currentIndexInList = -1;
 
-        selectFile.innerHTML = '<option value="">Selecciona una jugada...</option>';
+        selectFile.innerHTML = '<option value="" data-i18n="filter.select_play">Selecciona una jugada...</option>';
         plays.listaFiltrada.forEach((jugada, index) => {
             const meta = jugada.metadata || {};
             const min = meta.minuto || '00';
@@ -215,6 +230,8 @@ const plays = {
             opt.textContent = `⏱️ [${per} - ${min}:${seg}]`;
             selectFile.appendChild(opt);
         });
+
+        if (typeof translator !== 'undefined') translator.applyTranslations();
 
         selectFile.disabled = plays.listaFiltrada.length === 0;
 

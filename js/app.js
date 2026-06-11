@@ -420,7 +420,7 @@ function poblarFiltroTiposImpactos(datosImpactos) {
         if (tipo) tiposUnicos.add(tipo.trim());
     });
 
-    selectTipo.innerHTML = '<option value="TODOS">Todos los tipos</option>';
+    selectTipo.innerHTML = '<option value="TODOS" data-i18n="filter.all_types">Todos los tipos</option>';
 
     tiposUnicos.forEach(tipo => {
         const option = document.createElement('option');
@@ -428,6 +428,11 @@ function poblarFiltroTiposImpactos(datosImpactos) {
         option.textContent = tipo;
         selectTipo.appendChild(option);
     });
+
+    if (typeof translator !== 'undefined') {
+        translator.applyTranslations();
+    }
+    
     console.log(`🎯 Selector '#impactos-tipo-filter' cargado con ${tiposUnicos.size} tipos únicos.`);
 }
 
