@@ -425,15 +425,20 @@ function poblarFiltroTiposImpactos(datosImpactos) {
     tiposUnicos.forEach(tipo => {
         const option = document.createElement('option');
         option.value = tipo;
-        option.textContent = tipo;
+        
+        // Creamos una clave basada en el tipo (ej: "type.impacto_porteria")
+        // Convertimos a minúsculas y sustituimos espacios por guiones bajos
+        const translationKey = `type.${tipo.toLowerCase().replace(/\s+/g, '_')}`;
+        
+        option.setAttribute('data-i18n', translationKey);
+        
+        // Ponemos el valor original como fallback por si no existe la traducción
+        option.textContent = tipo; 
+        
         selectTipo.appendChild(option);
     });
 
     if (typeof translator !== 'undefined') {
         translator.applyTranslations();
     }
-    
-    console.log(`🎯 Selector '#impactos-tipo-filter' cargado con ${tiposUnicos.size} tipos únicos.`);
 }
-
-console.log('%c✅ app.js cargado correctamente', 'color: green; font-weight: bold');

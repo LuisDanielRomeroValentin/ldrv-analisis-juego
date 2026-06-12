@@ -32,7 +32,7 @@
                 </a>
             </div>
             
-            <div id="partido-info" class="status-badge-ldr d-none d-md-flex mx-auto">Esperando archivos…</div>
+            <div id="partido-info" class="status-badge-ldr d-none d-md-flex mx-auto" data-i18n="status.waiting_files">Esperando archivos…</div>
 
             <nav id="main-menu" class="d-none d-md-flex align-items-center gap-1 flex-shrink-0 ms-auto" style="visibility:hidden;">
                 <button id="btn-nav-brutos" class="btn nav-btn" data-i18n="nav.videos">📹 Vídeos</button>
@@ -146,7 +146,7 @@
                     </div>
                     <div class="col-12 col-lg-3 d-flex flex-column">
                         <div class="timeline-header mb-2 d-flex justify-content-between align-items-center mt-2 mt-lg-0 px-1">
-                            <h5 class="text-white m-0 small fw-bold" style="letter-spacing: 0.5px;">⏱️ CRONOLOGÍA</h5>
+                            <h5 class="text-white m-0 small fw-bold" style="letter-spacing: 0.5px;" data-i18n="shots.timeline">⏱️ CRONOLOGÍA</h5>
                             <span class="badge bg-success" id="total-impactos-badge">0</span>
                         </div>
                         <div id="lista-cronologica-impactos" class="timeline-responsive-container" style="max-height: 480px; overflow-y: auto;"></div>
@@ -178,9 +178,9 @@
                     </select>
                     <div id="wrapper-sub-visualizacion" style="display: none;">
                         <select id="sub-visualizacion-select" class="custom-select-ldrv" style="border-color: #ccff00; max-width: 180px;">
-                            <option value="vectores" selected>➼ Vectores de Progresión</option>
-                            <option value="puntos">● Puntos Duales (Origen/Fin)</option>
-                            <option value="transicion">▤ Matriz de Transición</option>
+                            <option value="vectores" data-i18n="plays.sub.vectors" selected>➼ Vectores de Progresión</option>
+                            <option value="puntos" data-i18n="plays.sub.points">● Puntos Duales (Origen/Fin)</option>
+                            <option value="transicion" data-i18n="plays.sub.transition">▤ Matriz de Transición</option>
                         </select>
                     </div>
                 </div>
@@ -195,13 +195,14 @@
             </div>
 
             <div class="canvas-controls-bar mt-2 d-flex justify-content-center align-items-center gap-2">
-                <button id="btn-play-animation" class="btn btn-success btn-sm px-4 fw-bold" disabled>▶ REPRODUCIR</button>
-                <button id="btn-pause-animation" class="btn btn-warning btn-sm text-dark px-4 fw-bold" disabled>⏸ PAUSAR</button>
-                <button id="btn-reset-animation" class="btn btn-secondary btn-sm px-4 fw-bold" disabled>🔄 REINICIAR</button>
+                <button id="btn-play-animation" class="btn btn-success btn-sm px-4 fw-bold" data-i18n="plays.btn_play" disabled>▶ REPRODUCIR</button>
+                <button id="btn-pause-animation" class="btn btn-warning btn-sm text-dark px-4 fw-bold" data-i18n="plays.btn_pause" disabled>⏸ PAUSAR</button>
+                <button id="btn-reset-animation" class="btn btn-secondary btn-sm px-4 fw-bold" data-i18n="plays.btn_reset" disabled>🔄 REINICIAR</button>
+                
                 <select id="play-speed-select" class="custom-select-ldrv" style="max-width: 110px; border-color: var(--ldr-green);">
                     <option value="0.0125">🐢 0.25x</option>
                     <option value="0.025">⏳ 0.50x</option>
-                    <option value="0.05" selected>⚡ 1.00x (Normal)</option>
+                    <option value="0.05" data-i18n="plays.speed_normal" selected>⚡ 1.00x (Normal)</option>
                     <option value="0.1">🚀 2.00x</option>
                 </select>
             </div>

@@ -72,15 +72,10 @@ const plays = {
 
         if (selectType) {
             selectType.onchange = (e) => {
-                plays.stopAnimacion(); 
+                plays.stopAnimacion();
                 plays.historialJugadasPasadas = [];
                 plays.filtrarYOrdenarJugadas(e.target.value);
-                
-                const modoActual = selectMode ? selectMode.value : 'individual';
-                
-                if (modoActual === 'mapa-calor' || modoActual === 'red-pases' || modoActual === 'mapa-cuadrantes' || modoActual === 'inicio-fin') {
-                    plays.dibujarFrame();
-                }
+                plays.refrescarInterfaz();
             };
         }
 
@@ -90,37 +85,17 @@ const plays = {
                 plays.historialJugadasPasadas = [];
                 
                 const modo = e.target.value;
-                
-                // 🔒 CONTROL RIGUROSO DE VISIBILIDAD USANDO EL WRAPPER REAL DEL HTML
-                const wrapperSub = document.getElementById('wrapper-sub-visualizacion');
-                if (wrapperSub) {
-                    if (modo === 'inicio-fin') {
-                        wrapperSub.style.setProperty('display', 'block', 'important');
-                    } else {
-                        wrapperSub.style.setProperty('display', 'none', 'important');
+
+                // Lógica de estado inicial específica para modos especiales
+                if (modo === 'secuencial-acumulado') {
+                    plays.currentIndexInList = 0;
+                    if (plays.listaFiltrada.length > 0) {
+                        plays.cargarJugada(plays.listaFiltrada[0]);
                     }
                 }
 
-                // Control de ocultación de reproducción en barra inferior
-                if (modo === 'mapa-calor' || modo === 'red-pases' || modo === 'mapa-cuadrantes' || modo === 'inicio-fin') {
-                    plays.toggleControlesReproduccion(false);
-                } else {
-                    plays.toggleControlesReproduccion(true);  
-                }
-                
-                if (modo === 'individual') {
-                    if (selectFile) selectFile.style.display = 'inline-block';
-                    document.getElementById('play-info-banner').style.display = 'none';
-                } else {
-                    if (selectFile) selectFile.style.display = 'none';
-                    if (modo === 'secuencial-acumulado') {
-                        plays.currentIndexInList = 0;
-                        if (plays.listaFiltrada.length > 0) {
-                            plays.cargarJugada(plays.listaFiltrada[0]);
-                        }
-                    }
-                }
-                plays.dibujarFrame();
+                // Delegamos toda la parte visual y de banners a nuestra función central
+                plays.refrescarInterfaz(); 
             };
         }
 
@@ -240,22 +215,74 @@ const plays = {
         }
     },
 
-    actualizarBannerInfo: (personalizado = null) => {
+    refrescarInterfaz: () => {
+        const modo = document.getElementById('play-mode-select')?.value || 'individual';
+        const wrapperSub = document.getElementById('wrapper-sub-visualizacion');
+        const selectFile = document.getElementById('play-file-select');
         const banner = document.getElementById('play-info-banner');
+
+        // 1. Control de Visibilidad del Wrapper
+        if (wrapperSub) {
+            wrapperSub.style.setProperty('display', modo === 'inicio-fin' ? 'block' : 'none', 'important');
+        }
+
+        // 2. Control de Controles de Reproducción
+        const esModoVisualizacion = ['mapa-calor', 'red-pases', 'mapa-cuadrantes', 'inicio-fin'].includes(modo);
+        plays.toggleControlesReproduccion(!esModoVisualizacion);
+
+        // 3. Control de Select de archivos
+        if (selectFile) {
+            selectFile.style.display = (modo === 'individual') ? 'inline-block' : 'none';
+        }
+
+        // 4. Control del Banner
+        if (banner) {
+            if (modo === 'individual') {
+                banner.style.display = 'none';
+            } else {
+                banner.style.display = 'block';
+                plays.actualizarBannerInfo();
+            }
+        }
+        
+        // 5. Dibujar final
+        plays.dibujarFrame();
+    },
+
+    actualizarBannerInfo: (payload = null) => {
+        const banner = document.getElementById('play-info-banner');
+        const modo = document.getElementById('play-mode-select')?.value;
         if (!banner) return;
 
-        if (personalizado) {
-            banner.innerHTML = personalizado;
-            banner.style.display = 'block';
+        // Ocultar siempre en modo individual
+        if (modo === 'individual') {
+            banner.style.display = 'none';
             return;
         }
 
-        if (!plays.currentPlay) return;
-        const meta = plays.currentPlay.metadata || {};
-        const tipo = (meta.tipo_jugada || 'Acción').replace(/_/g, ' ');
-        
-        banner.innerHTML = `🎥 PLAYLIST ACTIVA: REPRODUCIENDO <span class="text-white">${tipo.toUpperCase()}</span> | TIEMPO TÁCTICO: <span class="text-white">${meta.periodo || '1P'} - Min. ${meta.minuto || '00'}:${meta.segundo || '00'}</span>`;
+        let contenidoHTML = '';
+
+        // LÓGICA POR MODO
+        if (modo === 'secuencial-acumulado') {
+            // Caso: Reproducción activa de Playlist
+            if (payload && payload.jugada) {
+                const meta = payload.jugada.metadata || {};
+                contenidoHTML = `🎬 <span data-i18n="plays.playlist">PLAYLIST</span> | 
+                                 <span class="text-white">${meta.periodo || '1P'} - ${meta.minuto || '00'}:${meta.segundo || '00'}</span>`;
+            } else {
+                // Caso: Estado inicial o completado
+                contenidoHTML = `🎬 <span data-i18n="plays.playlist">PLAYLIST</span> | ${plays.listaFiltrada.length} <span data-i18n="plays.clips">CLIPS</span>`;
+            }
+        } 
+        else if (['mapa-calor', 'red-pases', 'mapa-cuadrantes', 'inicio-fin'].includes(modo)) {
+            // Caso: Mapas y Redes (usamos el payload.html si existe, sino fallback)
+            contenidoHTML = payload && payload.html ? payload.html : `📊 ${plays.listaFiltrada.length} <span data-i18n="plays.clips">CLIPS</span>`;
+        }
+
+        banner.innerHTML = contenidoHTML;
         banner.style.display = 'block';
+        
+        if (typeof translator !== 'undefined') translator.applyTranslations();
     },
 
     cargarJugada: (jugada) => {
@@ -263,7 +290,7 @@ const plays = {
         plays.currentAccionIndex = 0;
         plays.ballProgress = 0;
 
-        plays.actualizarBannerInfo();
+        plays.actualizarBannerInfo({ jugada: jugada });
         plays.dibujarFrame();
     },
 
@@ -355,11 +382,23 @@ const plays = {
                 if (plays.currentIndexInList + 1 < plays.listaFiltrada.length) {
                     setTimeout(() => {
                         plays.currentIndexInList++;
-                        plays.cargarJugada(plays.listaFiltrada[plays.currentIndexInList]);
+                        const siguienteJugada = plays.listaFiltrada[plays.currentIndexInList];
+                        
+                        plays.cargarJugada(siguienteJugada);
+                        // La llamada a actualizarBannerInfo ya está dentro de cargarJugada, 
+                        // pero si quieres reforzarla aquí, basta con el payload:
+                        plays.actualizarBannerInfo({ jugada: siguienteJugada }); 
+                        
                         plays.startAnimacion();
                     }, 1100);
                 } else {
-                    plays.actualizarBannerInfo(`✅ PLAYLIST COMPLETADA — TOTAL JUGADAS EVALUADAS: ${plays.listaFiltrada.length}`);
+                    // LLAMADA SIMPLIFICADA: 
+                    // Como el banner ya sabe qué modo es y que ha terminado,
+                    // esta llamada mostrará el mensaje por defecto (o puedes pasar un HTML personalizado).
+                    plays.actualizarBannerInfo({ 
+                        html: `✅ <span data-i18n="plays.playlist_completed">PLAYLIST COMPLETADA</span> — 
+                               <span data-i18n="plays.total_evaluated">TOTAL JUGADAS</span>: ${plays.listaFiltrada.length}` 
+                    });
                 }
             }
             return;
@@ -559,13 +598,6 @@ const plays = {
             }
         });
 
-        // Banner informativo adaptado
-        if (modo === 'inicio-fin') {
-            const txtSub = subVista === 'vectores' ? 'VECTORES PROGRESIÓN' : (subVista === 'puntos' ? 'PUNTOS DUALES' : 'MATRIZ DE TRANSICIÓN');
-            plays.actualizarBannerInfo(`🎯 RED INICIO-FIN (${txtSub}) — FILTRO: <span class="text-white">${nombreFiltro}</span> | CLIPS: ${plays.listaFiltrada.length}`);
-        } else {
-            plays.actualizarBannerInfo(`⛓️ RED DE PASES COMPUESTA — FILTRO: <span class="text-white">${nombreFiltro}</span> | CLIPS: ${plays.listaFiltrada.length}`);
-        }
     },
 
     dibujarEntidad: (x, y, color, texto, radio, colorBorde = '#ffffff') => {

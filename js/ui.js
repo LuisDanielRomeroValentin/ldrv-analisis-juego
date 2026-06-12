@@ -149,6 +149,7 @@ const ui = {
                     ${notasHTML}
                 </div>
                 <button class="btn btn-primary w-100"
+                    data-i18n="buttons.view_clip"
                     onclick="ui.playVideo('${rutaSafe}', '${labelSafe}')">
                     &#9654; VER CLIP
                 </button>
@@ -275,7 +276,7 @@ const ui = {
         if (badgeTotal) badgeTotal.textContent = datosImpactos.length;
 
         if (!datosImpactos || datosImpactos.length === 0) {
-            contenedor.innerHTML = '<div class="text-center p-3 text-dim small">No hay impactos registrados</div>';
+            contenedor.innerHTML = '<div class="text-center p-3 text-dim small" data-i18n="shots.no_impacts">No hay impactos registrados</div>';
             return;
         }
 
@@ -303,13 +304,16 @@ const ui = {
             row.innerHTML = `
                 <div class="d-flex align-items-center gap-3 w-100">
                     <div class="d-flex align-items-center justify-content-center rounded-circle" 
-                         style="width: 28px; height: 28px; background-color: ${esGol ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border: 1px solid ${esGol ? '#22c55e' : '#404040'}; font-size: 0.9rem;">
+                        style="width: 28px; height: 28px; background-color: ${esGol ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border: 1px solid ${esGol ? '#22c55e' : '#404040'}; font-size: 0.9rem;">
                         ${esGol ? '⚽' : '⚪'}
                     </div>
                     <div class="flex-grow-1">
-                        <span class="text-white fw-bold small">MINUTO ${tiempo}</span>
+                        <span class="text-white fw-bold small" data-i18n="shots.minute">MINUTO</span> ${tiempo}
                         <small class="text-dim d-block" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                            ${periodo} ${esGol ? '• <span class="text-success fw-bold">GOL</span>' : '• TIRO'}
+                            ${periodo} • 
+                            <span data-i18n="${esGol ? 'shots.goal' : 'shots.shot'}">
+                                ${esGol ? 'GOL' : 'TIRO'}
+                            </span>
                         </small>
                     </div>
                     <span class="text-muted small pe-1" style="font-size: 0.75rem;">➔</span>

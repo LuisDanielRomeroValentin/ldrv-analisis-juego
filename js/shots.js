@@ -16,7 +16,6 @@ const shots = {
         canvas.width = window.plays ? plays.modelWidth : 900;
         canvas.height = window.plays ? plays.modelHeight : 500;
 
-        console.log('%c⚽ Módulo Mapa de Tiros Inicializado', 'color: #10b981; font-weight: bold;');
     },
 
     /**
@@ -54,12 +53,27 @@ const shots = {
         // Actualizar el banner informativo de la interfaz con el doble feedback
         const banner = document.getElementById('impactos-info-banner');
         if (banner) {
-            banner.innerHTML = `🎯 FILTROS ➔ PERIODO: <span class="text-white">${periodoSeleccionado}</span> | TIPO: <span class="text-white">${tipoSeleccionado}</span> | TIROS: <span class="text-white">${totalPintados}</span>`;
-        }
+            const periodKey = periodoSeleccionado === 'TODOS' ? 'filter.all' : '';
+            
+            // 1. Generamos la clave para el tipo: si es TODOS, usamos 'filter.all_types'
+            // Si no, generamos la clave dinámica igual que en el populate (type.nombre_tipo)
+            const typeKey = tipoSeleccionado === 'TODOS' 
+                ? 'filter.all_types' 
+                : `type.${tipoSeleccionado.toLowerCase().replace(/\s+/g, '_')}`;
 
-        // 🔄 Sincronizar reactivamente la lista lateral cronológica con los datos filtrados
-        if (typeof ui !== 'undefined' && ui.poblarListaCronologica) {
-            ui.poblarListaCronologica(listaFiltrada);
+            banner.innerHTML = `
+                <span data-i18n="shots.filters">🎯 FILTROS</span> ➔ 
+                <span data-i18n="shots.period">PERIODO</span>: 
+                <span class="text-white" ${periodKey ? `data-i18n="${periodKey}"` : ''}>${periodoSeleccionado}</span> | 
+                <span data-i18n="shots.type">TIPO</span>: 
+                <span class="text-white" data-i18n="${typeKey}">${tipoSeleccionado}</span> | 
+                <span data-i18n="shots.shots">TIROS</span>: <span class="text-white">${totalPintados}</span>
+            `;
+            
+            // 2. El traductor leerá el data-i18n del span y lo sustituirá por la traducción
+            if (typeof translator !== 'undefined') {
+                translator.applyTranslations();
+            }
         }
     },
 
