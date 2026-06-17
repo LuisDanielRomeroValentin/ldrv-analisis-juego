@@ -78,6 +78,12 @@ async function processZip(file) {
             return name === "resumen_informe.json" && !normalized.includes('__macosx');
         });
 
+        const rFileNameEN = Object.keys(zip.files).find(f => {
+            const normalized = normalizePath(f);
+            const name = getFileName(f);
+            return name === "resumen_informe_en.json" && !normalized.includes('__macosx');
+        });
+
         console.log(`📋 Archivos encontrados:
             - Partido: ${pFileName ? '✅' : '❌'}
             - Cortes: ${cFileName ? '✅' : '❌'}
@@ -96,24 +102,35 @@ async function processZip(file) {
         appState.datosCortes      = JSON.parse(await zip.file(cFileName).async("string"));
         appState.valoracionCortes = parseValoraciones(JSON.parse(await zip.file(vFileName).async("string")));
         
-        // 3. Carga SEGURA del resumen (Si no existe, no falla, pero avisa)
-        if (rFileName) {
+        // 3. Carga SEGURA de resúmenes (es y en)
+        appState.resumenInformeData = {}; // Inicializamos como objeto contenedor
+
+        // Función auxiliar para mantener el código limpio
+        const cargarFicheroResumen = async (filename, lang) => {
             try {
-                appState.resumenInformeData = JSON.parse(await zip.file(rFileName).async("string"));
-                
-                // Mostrar botones solo si el archivo existe
-                const btnNav = document.getElementById('btn-nav-resumen');
-                const btnNavMob = document.getElementById('btn-nav-resumen-mobile');
-                if (btnNav) btnNav.style.setProperty('display', 'inline-block', 'important');
-                if (btnNavMob) btnNavMob.style.setProperty('display', 'block', 'important');
-                
-                console.log("✅ Resumen cargado con éxito.");
+                const contenido = await zip.file(filename).async("string");
+                appState.resumenInformeData[lang] = JSON.parse(contenido);
+                return true;
             } catch (e) {
-                console.warn("⚠️ El archivo de resumen existe pero está corrupto.");
-                appState.resumenInformeData = null;
+                console.warn(`⚠️ Archivo de resumen ${lang} existe pero está corrupto.`);
+                return false;
             }
+        };
+
+        // Intentamos cargar ambos si existen (rFileName es el de español, rFileNameEN el de inglés)
+        const esCargado = rFileName ? await cargarFicheroResumen(rFileName, 'es') : false;
+        const enCargado = rFileNameEN ? await cargarFicheroResumen(rFileNameEN, 'en') : false;
+
+        // Mostrar botones si al menos uno se cargó
+        if (esCargado || enCargado) {
+            const btnNav = document.getElementById('btn-nav-resumen');
+            const btnNavMob = document.getElementById('btn-nav-resumen-mobile');
+            if (btnNav) btnNav.style.setProperty('display', 'inline-block', 'important');
+            if (btnNavMob) btnNavMob.style.setProperty('display', 'block', 'important');
+            
+            console.log(`✅ Resúmenes cargados: ES=${esCargado}, EN=${enCargado}`);
         } else {
-            console.warn("ℹ️ No se encontró resumen_informe.json. La app funcionará sin él.");
+            console.warn("ℹ️ No se encontraron archivos de resumen. La app funcionará sin ellos.");
             appState.resumenInformeData = null;
         }
 
@@ -168,6 +185,7 @@ async function processFolder(files) {
         });
         
         const rFile = files.find(f => getFileName(f.name) === "resumen_informe.json");
+        const rFileEN = files.find(f => getFileName(f.name) === "resumen_informe_en.json");
 
         console.log(`📋 Archivos encontrados en carpeta:
             - Partido: ${pFile ? '✅ ' + pFile.name : '❌'}
@@ -183,19 +201,35 @@ async function processFolder(files) {
         appState.datosCortes  = JSON.parse(await cFile.text());
         appState.valoracionCortes = parseValoraciones(JSON.parse(await vFile.text()));
 
-        // NUEVO: Procesar opcionalmente el resumen en carga local
-        if (rFile) {
+        // 3. Carga SEGURA de ambos resúmenes (es y en) desde carpeta
+        appState.resumenInformeData = {}; // Inicializamos como contenedor { es: ..., en: ... }
+
+        const cargarFicheroResumenLocal = async (file, lang) => {
             try {
-                appState.resumenInformeData = JSON.parse(await rFile.text());
-                console.log("📋 Resumen de informe cargado desde carpeta local con éxito.");
-                // Mostrar botones de la interfaz
-                const btnNav = document.getElementById('btn-nav-resumen');
-                const btnNavMob = document.getElementById('btn-nav-resumen-mobile');
-                if (btnNav) btnNav.style.setProperty('display', 'inline-block', 'important');
-                if (btnNavMob) btnNavMob.style.setProperty('display', 'block', 'important');
+                const texto = await file.text();
+                appState.resumenInformeData[lang] = JSON.parse(texto);
+                return true;
             } catch (e) {
-                console.error("❌ Error parseando resumen_informe.json local:", e);
+                console.warn(`⚠️ Error al parsear resumen local (${lang}):`, e);
+                return false;
             }
+        };
+
+        // Intentamos cargar ambos si existen (rFile para español, rFileEN para inglés)
+        const esCargado = rFile ? await cargarFicheroResumenLocal(rFile, 'es') : false;
+        const enCargado = rFileEN ? await cargarFicheroResumenLocal(rFileEN, 'en') : false;
+
+        // Mostrar botones de navegación si al menos uno se cargó correctamente
+        if (esCargado || enCargado) {
+            const btnNav = document.getElementById('btn-nav-resumen');
+            const btnNavMob = document.getElementById('btn-nav-resumen-mobile');
+            if (btnNav) btnNav.style.setProperty('display', 'inline-block', 'important');
+            if (btnNavMob) btnNavMob.style.setProperty('display', 'block', 'important');
+            
+            console.log(`✅ Resúmenes cargados desde carpeta: ES=${esCargado}, EN=${enCargado}`);
+        } else {
+            console.warn("ℹ️ No se encontraron archivos de resumen válidos en la carpeta.");
+            appState.resumenInformeData = null;
         }
 
         appState.allFilesFlat = files.map(f => ({

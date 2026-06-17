@@ -17,6 +17,10 @@ const translator = {
         this.currentLang = lang;
         localStorage.setItem('userLang', lang);
         this.applyTranslations();
+
+        if (typeof resume !== 'undefined') {
+            resume.renderizar();
+        }
     },
 
     applyTranslations: function() {
@@ -67,6 +71,31 @@ const translator = {
                 el.textContent = translation;
             }
         });
+    },
+
+    get: function(key) {
+        const dict = this.dictionary[this.currentLang];
+        if (dict && dict[key]) {
+            return dict[key];
+        }
+        console.warn(`⚠️ Traducción no encontrada para: ${key}`);
+        return key; // Devuelve la clave si no existe, útil para detectar errores
+    },
+
+    getMappedKey: function(key) {
+        // 1. Normalizamos: 
+        // - Quitamos tildes
+        // - Reemplazamos cualquier grupo de espacios o guiones (uno o más) por un solo guion bajo
+        const slug = key.toLowerCase()
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                        .replace(/[\s-]+/g, '_') // Agrupa espacios y guiones en un solo '_'
+                        .replace(/_+/g, '_');    // Evita guiones bajos duplicados
+        
+        const mappedKey = `label.${slug}`;
+        const translation = this.get(mappedKey);
+        
+        // Si no encuentra la traducción, muestra la clave original limpia o la que llega
+        return translation !== mappedKey ? translation : key;
     }
    
 };

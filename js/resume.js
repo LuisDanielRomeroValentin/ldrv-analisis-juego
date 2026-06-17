@@ -2,7 +2,6 @@
 
 const resume = {
     init: () => {
-        // Añadimos el botón de móvil por si acaso
         const botones = ['btn-nav-resumen', 'btn-nav-resumen-mobile'];
         
         botones.forEach(id => {
@@ -19,7 +18,6 @@ const resume = {
 
                     ui.showSection('v-resumen');
                     
-                    // Ajuste clave para iOS: forzar visibilidad del contenedor
                     const contenedor = document.getElementById('sheet-preview-container');
                     if (contenedor) {
                         contenedor.style.display = 'block';
@@ -28,7 +26,7 @@ const resume = {
 
                     setTimeout(() => {
                         resume.renderizar();
-                    }, 150); // Ligeramente mayor para asegurar el cambio de DOM
+                    }, 150);
                 });
             }
         });
@@ -48,11 +46,8 @@ const resume = {
         }).join('');
     },
 
-    // EXTRAÍDA AQUÍ: Función recursiva limpia como método del módulo
     procesarNivelTactico: (objeto, profundidad = 1) => {
         let subHtml = '';
-
-        // Condición de parada: Nodo final con los datos del análisis
         if (objeto && (objeto.hasOwnProperty('patrones_detectados') || objeto.hasOwnProperty('anotaciones_libres'))) {
             const tienePatrones = objeto.patrones_detectados && objeto.patrones_detectados.length > 0;
             const tieneAnotaciones = objeto.anotaciones_libres && objeto.anotaciones_libres.trim() !== "";
@@ -78,19 +73,28 @@ const resume = {
             return subHtml;
         }
 
-        // Si no es el nodo final, iteramos sus claves
         if (objeto && typeof objeto === 'object') {
             for (const [clave, valor] of Object.entries(objeto)) {
-                if (profundidad === 1) {
-                    let sectionTheme = { border: 'border-secondary-subtle', text: 'text-secondary', bg: 'bg-secondary-subtle' };
-                    if (clave.toLowerCase().includes('fortaleza')) sectionTheme = { border: 'border-success-subtle', text: 'text-success', bg: 'bg-success-subtle' };
-                    else if (clave.toLowerCase().includes('debilidad')) sectionTheme = { border: 'border-danger-subtle', text: 'text-danger', bg: 'bg-danger-subtle' };
-                    else if (clave.toLowerCase().includes('general') || clave.toLowerCase().includes('aspectos')) sectionTheme = { border: 'border-primary-subtle', text: 'text-primary', bg: 'bg-primary-subtle' };
+                const claveLower = clave.toLowerCase();
+                
+                // 1. Lógica de colores bilingüe
+                let sectionTheme = { border: 'border-secondary-subtle', text: 'text-secondary', bg: 'bg-secondary-subtle' };
+                
+                if (claveLower.includes('fortaleza') || claveLower.includes('strength')) 
+                    sectionTheme = { border: 'border-success-subtle', text: 'text-success', bg: 'bg-success-subtle' };
+                else if (claveLower.includes('debilidad') || claveLower.includes('weakness')) 
+                    sectionTheme = { border: 'border-danger-subtle', text: 'text-danger', bg: 'bg-danger-subtle' };
+                else if (claveLower.includes('general') || claveLower.includes('aspectos')) 
+                    sectionTheme = { border: 'border-primary-subtle', text: 'text-primary', bg: 'bg-primary-subtle' };
 
+                // 2. Renderizado con traducción de claves
+                if (profundidad === 1) {
                     subHtml += `
                         <div class="mb-4 rounded-3 overflow-hidden dossier-card">
                             <div class="px-3 py-2.5 border-bottom d-flex align-items-center justify-content-between ${sectionTheme.bg}" style="border-color: rgba(0,0,0,0.05) !important;">
-                                <span class="fw-extrabold text-uppercase ${sectionTheme.text}" style="font-size: 0.8rem; letter-spacing: 1px;">${clave}</span>
+                                <span class="fw-extrabold text-uppercase ${sectionTheme.text}" style="font-size: 0.8rem; letter-spacing: 1px;">
+                                    ${translator.getMappedKey(clave)}
+                                </span>
                             </div>
                             <div class="p-3 bg-white">
                                 ${resume.procesarNivelTactico(valor, profundidad + 1)}
@@ -100,7 +104,7 @@ const resume = {
                     subHtml += `
                         <div class="mb-3.5 report-subphase-block">
                             <h6 class="fw-bold text-dark border-bottom pb-1 mb-2.5" style="font-size: 0.95rem; color: #1e293b !important; letter-spacing: -0.2px;">
-                                🛡️ ${clave}
+                                🛡️ ${translator.getMappedKey(clave)}
                             </h6>
                             ${resume.procesarNivelTactico(valor, profundidad + 1)}
                         </div>`;
@@ -110,7 +114,7 @@ const resume = {
                         <div class="mb-3" style="margin-left: ${marginCalculado}px;">
                             <div class="d-flex align-items-center gap-1.5 mb-2">
                                 <span class="badge bg-light text-slate-600 border border-slate-200" style="font-size: 0.74rem; font-weight: 600; color: #475569; background-color: #f8fafc; padding: 3px 8px;">
-                                    ${clave}
+                                    ${translator.getMappedKey(clave)}
                                 </span>
                             </div>
                             ${resume.procesarNivelTactico(valor, profundidad + 1)}
@@ -118,7 +122,6 @@ const resume = {
                 }
             }
         }
-
         return subHtml;
     },
 
@@ -126,8 +129,14 @@ const resume = {
         const contenedor = document.getElementById('sheet-preview-container');
         if (!contenedor) return;
 
-        const datosInforme = appState.resumenInformeData;
-        if (!datosInforme) return;
+        const lang = translator.currentLang;
+        const contenedorDatos = appState.resumenInformeData;
+        const datosInforme = contenedorDatos ? contenedorDatos[lang] : null;
+
+        if (!datosInforme) {
+            contenedor.innerHTML = `<div class="p-5 text-center text-muted">${translator.get('resume.no_data')} ${lang.toUpperCase()}</div>`;
+            return;
+        }
 
         const datosPartido = appState.partidoData || {}; 
         const metaInforme = datosInforme.partido_metadata || {};
@@ -136,19 +145,9 @@ const resume = {
         const jornadaNum = datosPartido.jornada || metaInforme.jornada;
         const jornadaTexto = jornadaNum ? ` — Jornada ${jornadaNum}` : '';
 
-        let fechaMostrar = datosPartido.fecha || metaInforme.fecha;
-        if (fechaMostrar) {
-            const partes = fechaMostrar.split('-');
-            if (partes.length === 3) {
-                fechaMostrar = `${partes[2]}/${partes[1]}/${partes[0]}`;
-            }
-        } else {
-            fechaMostrar = '10/05/2026';
-        }
-
+        let fechaMostrar = datosPartido.fecha || metaInforme.fecha || '10/05/2026';
         const horaTexto = datosPartido.hora ? ` | ${datosPartido.hora}` : ' | 21:00';
 
-        // Construcción del HTML
         let html = `
         <div class="p-5 bg-white rounded shadow-sm border border-slate-100 style-dossier" style="color: #0f172a; max-width: 1100px; margin: 0 auto; font-family: 'Inter', system-ui, sans-serif;">
             <table style="width: 100%; border-collapse: collapse; background: transparent;">
@@ -162,23 +161,23 @@ const resume = {
                                         <img src="img/logo.png" alt="Logo LDRV PRO" height="48" onerror="this.style.display='none'">
                                         <div>
                                             <h4 class="m-0 fw-black tracking-tight" style="color: #0f172a; font-size: 1.35rem; letter-spacing: -0.7px; text-transform: uppercase;">
-                                                LDRV PRO - <span class="fw-light text-muted" style="font-weight: 300; color: #64748b;">ANALISIS</span>
+                                                ${translator.get('resume.title')}
                                             </h4>
-                                            <small class="text-success fw-bold text-uppercase d-block mt-0.5" style="font-size: 0.72rem; letter-spacing: 1.2px;">Freelance Football Data & Game Analyst</small>
+                                            <small class="text-success fw-bold text-uppercase d-block mt-0.5" style="font-size: 0.72rem; letter-spacing: 1.2px;">${translator.get('resume.subtitle')}</small>
                                         </div>
                                     </div>
                                     <div class="text-end">
-                                        <span class="fw-bold tracking-wider" style="font-size: 0.7rem; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px;">Documento Oficial</span>
-                                        <small class="text-muted d-block" style="font-size: 0.65rem;">ANÁLISIS MODELO JUEGO</small>
+                                        <span class="fw-bold tracking-wider" style="font-size: 0.7rem; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px;">${translator.get('resume.official_doc')}</span>
+                                        <small class="text-muted d-block" style="font-size: 0.65rem;">${translator.get('resume.analysis_model')}</small>
                                     </div>
                                 </div>
                                 <div class="row g-2 mb-4 p-3 rounded" style="font-size: 0.85rem; background-color: #f8fafc; border: 1px solid #e2e8f0;">
                                     <div class="col-8">
-                                        <span class="text-muted text-uppercase fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 0.5px;">Encuentro / Competición</span>
+                                        <span class="text-muted text-uppercase fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 0.5px;">${translator.get('resume.match_comp')}</span>
                                         <strong class="text-dark" style="font-size: 1rem;">${local} vs ${visitante}${jornadaTexto}</strong>
                                     </div>
                                     <div class="col-4 text-md-end">
-                                        <span class="text-muted text-uppercase fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 0.5px;">Fecha y Hora Informe</span>
+                                        <span class="text-muted text-uppercase fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 0.5px;">${translator.get('resume.date_time')}</span>
                                         <strong class="text-dark">${fechaMostrar}${horaTexto}</strong>
                                     </div>
                                 </div>
@@ -193,41 +192,39 @@ const resume = {
 
         if (datosInforme.texto_inicial_global) {
             html += `
-                                <div class="mb-5 report-section">
-                                    <h5 class="fw-bold mb-3 pb-1 text-dark position-relative" style="font-size: 1.1rem; letter-spacing: -0.3px;">
-                                        1. Introducción y Contexto General
-                                        <span class="position-absolute bottom-0 start-0 bg-success rounded" style="width: 35px; height: 3px;"></span>
-                                    </h5>
-                                    <div class="p-3.5 rounded-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
-                                        ${resume.formatearTexto(datosInforme.texto_inicial_global)}
-                                    </div>
-                                </div>`;
+                <div class="mb-5 report-section">
+                    <h5 class="fw-bold mb-3 pb-1 text-dark position-relative" style="font-size: 1.1rem; letter-spacing: -0.3px;">
+                        1. ${translator.get('resume.section_1')}
+                        <span class="position-absolute bottom-0 start-0 bg-success rounded" style="width: 35px; height: 3px;"></span>
+                    </h5>
+                    <div class="p-3.5 rounded-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
+                        ${resume.formatearTexto(datosInforme.texto_inicial_global)}
+                    </div>
+                </div>`;
         }
 
         if (datosInforme.resumen_tactico) {
             html += `
-                                <div class="mb-5 report-section">
-                                    <h5 class="fw-bold mb-4 pb-1 text-dark position-relative" style="font-size: 1.1rem; letter-spacing: -0.3px;">
-                                        2. Desglose Táctico por Categorías
-                                        <span class="position-absolute bottom-0 start-0 bg-success rounded" style="width: 35px; height: 3px;"></span>
-                                    </h5>`;
-
-            // LLAMADA LIMPIA AL MÉTODO DEL OBJETO RESUME
-            html += resume.procesarNivelTactico(datosInforme.resumen_tactico);
-            html += `</div>`;
+                <div class="mb-5 report-section">
+                    <h5 class="fw-bold mb-4 pb-1 text-dark position-relative" style="font-size: 1.1rem; letter-spacing: -0.3px;">
+                        2. ${translator.get('resume.section_2')}
+                        <span class="position-absolute bottom-0 start-0 bg-success rounded" style="width: 35px; height: 3px;"></span>
+                    </h5>
+                    ${resume.procesarNivelTactico(datosInforme.resumen_tactico)}
+                </div>`;
         }
 
         if (datosInforme.texto_final_global) {
             html += `
-                                <div class="mb-2 report-section" style="page-break-before: always; break-before: page;">
-                                    <h5 class="fw-bold mb-3 pb-1 text-dark position-relative" style="font-size: 1.1rem; letter-spacing: -0.3px;">
-                                        3. Conclusiones y Recomendaciones Finales
-                                        <span class="position-absolute bottom-0 start-0 bg-success rounded" style="width: 35px; height: 3px;"></span>
-                                    </h5>
-                                    <div class="p-3.5 rounded-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
-                                        ${resume.formatearTexto(datosInforme.texto_final_global)}
-                                    </div>
-                                </div>`;
+                <div class="mb-2 report-section" style="page-break-before: always; break-before: page;">
+                    <h5 class="fw-bold mb-3 pb-1 text-dark position-relative" style="font-size: 1.1rem; letter-spacing: -0.3px;">
+                        3. ${translator.get('resume.section_3')}
+                        <span class="position-absolute bottom-0 start-0 bg-success rounded" style="width: 35px; height: 3px;"></span>
+                    </h5>
+                    <div class="p-3.5 rounded-3" style="background-color: #f8fafc; border: 1px solid #f1f5f9;">
+                        ${resume.formatearTexto(datosInforme.texto_final_global)}
+                    </div>
+                </div>`;
         }
 
         html += `
@@ -239,10 +236,8 @@ const resume = {
         </div>`;
 
         contenedor.innerHTML = html;
-        
-        // FORZADO DE REPAINT (Crucial para iOS)
         contenedor.style.display = 'none';
-        contenedor.offsetHeight; // Truco técnico
+        contenedor.offsetHeight; 
         contenedor.style.display = 'block';
 
         console.log("🎉 Renderizado completado.");

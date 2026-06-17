@@ -73,7 +73,23 @@
         "plays.btn_play": "▶ REPRODUCIR",
         "plays.btn_pause": "⏸ PAUSAR",
         "plays.btn_reset": "🔄 REINICIAR",
-        "plays.speed_normal": "⚡ 1.00x (Normal)"
+        "plays.speed_normal": "⚡ 1.00x (Normal)",
+        "resume.title": "LDRV PRO - ANÁLISIS",
+        "resume.subtitle": "Analisis Tactico - Datos",
+        "resume.official_doc": "Documento Oficial",
+        "resume.analysis_model": "ANÁLISIS MODELO JUEGO",
+        "resume.match_comp": "Encuentro / Competición",
+        "resume.date_time": "Fecha y Hora Informe",
+        "resume.section_1": "1. Introducción y Contexto General",
+        "resume.section_2": "2. Desglose Táctico por Categorías",
+        "resume.section_3": "3. Conclusiones y Recomendaciones Finales",
+        "resume.no_data": "Datos no disponibles en",
+        "label.fortalezas": "Fortalezas",
+        "label.debilidades": "Debilidades",
+        "label.fase_ofensiva": "Fase Ofensiva",
+        "label.fase_iniciacion_salida_balon": "Fase Iniciación - Salida de Balón",
+        "label.fase_creacion_circulacion_progresion": "Fase Creación - Circulación - Progresión",
+        "label.fase_finalizacion": "Fase Finalización"
     },
     "en": {
         "status.waiting_files": "Waiting for files...",
@@ -149,6 +165,22 @@
         "plays.btn_play": "▶ PLAY",
         "plays.btn_pause": "⏸ PAUSE",
         "plays.btn_reset": "🔄 RESET",
-        "plays.speed_normal": "⚡ 1.00x (Normal)"
+        "plays.speed_normal": "⚡ 1.00x (Normal)",
+        "resume.title": "LDRV PRO - ANALYSIS",
+        "resume.subtitle": "Tactical Analysis - Data",
+        "resume.official_doc": "Official Document",
+        "resume.analysis_model": "GAME MODEL ANALYSIS",
+        "resume.match_comp": "Match / Competition",
+        "resume.date_time": "Report Date & Time",
+        "resume.section_1": "1. Introduction & General Context",
+        "resume.section_2": "2. Tactical Breakdown by Categories",
+        "resume.section_3": "3. Conclusions & Final Recommendations",
+        "resume.no_data": "Data not available in",
+        "label.fortalezas": "Strengths",
+        "label.debilidades": "Weaknesses",
+        "label.fase_ofensiva": "Offensive Phase",
+        "label.fase_iniciacion_salida_balon": "Initiation Phase - Playing out from the back",
+        "label.fase_creacion_circulacion_progresion": "Creation Phase - Circulation - Progression",
+        "label.fase_finalizacion": "Finishing Phase"
     }
 }
